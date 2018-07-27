@@ -1,2 +1,2 @@
-# dbms_project
+# DBMS_PROJECT
 DBMS midterm group project
