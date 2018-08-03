@@ -15,7 +15,7 @@ var con = require('./include/connection');	//db connection
 app.use('/lib', express.static(__dirname + '/view/lib/'));
 
 app.get('/api/product-lines', function(req, res){
-	con.query('SELECT * FROM `tblproductlines` ORDER BY `line_id` ASC', function(err, rows){
+	con.query('SELECT * FROM `tblproductlines` WHERE line_status = 1 ORDER BY `line_id` ASC', function(err, rows){
     	if (err)
     		throw err;
     	var json_data = [];
@@ -56,7 +56,7 @@ app.post("/api/post/add-prod-line", jsonParser, function(req, res){
 	var name = con.escape(req.body.name);
 	res.writeHead(200, {'Content-type': 'text/plain'});
 	// check if item already exist
-	con.query("SELECT line_id FROM tblproductlines WHERE line_name = " + name, function(err, rows){
+	con.query("SELECT line_id FROM tblproductlines WHERE line_status = 1 AND line_name = " + name, function(err, rows){
 		if (rows.length > 0){
 			res.end("Product-line Already Exists");
 		}
