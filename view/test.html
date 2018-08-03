@@ -1,0 +1,209 @@
+<!DOCTYPE>
+<html ng-app="myApp" ng-controller="myCtrl"">
+<head>
+	<title>Inventory Bullshit</title>
+	<meta charset="utf-8">
+	<script src="/lib/js/angular.js"></script>
+	
+	<script src="/lib/js/jquery-3.3.1.min.js"></script>
+	<script src="/lib/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="lib/css/bootstrap.min.css">
+</head>
+<body style="width: 100%;">
+	<div class="fluid-container ">
+		<div class="row justify-content-md-center" style="margin-top: 3%;">
+			<h2>INVENTORY SYSTEM</h2>
+		</div>
+		<div class="row justify-content-md-center border">
+			<div class="form-group">
+				<label>Product Lines</label>
+				<select>
+					<option ng-repeat="x in res" value="{{x.id}}" ng-click="getProducts(x.id, x.name);">{{x.name}}</option>p
+				</select>
+			</div>
+			
+			<button style="height: 20%; height: 10%; margin-left: 4%;" type="button" class="btn btn-primary" data-toggle="modal" data-target="#addProdModal">
+				<small>Add Product Line</small>
+			</button>
+		</div>
+		<div class="row">
+			<div style="margin-left: 3%;">Product Type: {{selected_line_name}}</div>
+		</div>
+		<div class="row">
+			<div style="height: 350px; width: 100%; overflow-y: auto; overflow-x: hidden;">
+				<table class="table table-hover table-striped" style="margin-left: 2%; margin-right: 3%;">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Product Name</th>
+							<th style="min-width: 30%;">Description</th>
+							<th>Price</th>
+							<th>Quantity</th>
+							<th>Actions</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="x in product_data">
+							<td>{{x.prod_id}}</td>
+							<td>{{x.name}}</td>
+							<td>{{x.desc}}</td>
+							<td>{{x.price}}</td>
+							<td>{{x.qty}}</td>
+							<td><a href="">Edit</a> &#160
+								<a href=""> Delete</a></td>
+							<td><input type="checkbox" name=""></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="row">
+			<div style="margin-left: 2%;">
+				<div style="float: left;">
+					<button  data-toggle="modal" data-target="#addProductModal">Add New {{selected_line_name}}</button>
+					<button>Order Selected</button>
+				</div>
+			</div>
+		</div>
+		
+	</div>
+
+	<!-- Modal for Adding Product Line-->
+	<div class="modal fade" id="addProdModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Add Product line</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+
+	         <form name="addProdForm" ng-submit="addProdLine()">
+			  <div class="form-group">
+			    <label for="prod_name">Product Line Name:</label>
+			    <input type="text" class="form-control" name="prod_name" ng-minlength="3" ng-model="prod.addName" required/>
+			  </div>
+			  <button class="btn btn-default" ng-disabled="addProdForm.$invalid">Add</button>
+			</form>
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Modal for Adding Product-->
+	<div class="modal fade" id="addProductModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Add New {{selected_line_name}}</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+
+	         <form name="newProduct" ng-submit="addProd()">
+			  <div class="form-group">
+			    <label for="product_name">Product Name:</label>
+			    <input type="text" class="form-control" name="prod_name" ng-model="nprod.name" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="product_desc">Product Description:</label>
+			    <textarea class="form-control" rows="3"  name="product_desc" ng-model="nprod.desc" ng-minlength="8" ng-maxlength="200" required></textarea>
+			  </div>
+			  
+			  <div class="form-group">
+			    <label for="product_qty">Product Quantity:</label>
+			    <input type="number" class="form-control" name="product_qty" ng-model="nprod.qty" min="1" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="product_price">Product Price:</label>
+			    <input type="number" class="form-control" name="product_price" ng-model="nprod.price" required/>
+			  </div>
+			  <button class="btn btn-default" ng-disabled="newProduct.$invalid">Add Product</button>
+			</form>
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	
+<script type="text/javascript">
+	$(document).ready(function() {
+		$('.modal').on('hidden.bs.modal', function(){
+	        $(this).find('form')[0].reset();
+	     });
+	});
+	var app = angular.module("myApp", []);
+
+	app.controller("myCtrl", function($scope, $http){
+		$scope.selected_line;
+		$scope.selected_line_name;
+
+		// get product lines
+		$scope.getProductLines = function(){
+			$http.get("/api/product-lines").then(function(response){
+				$scope.res = response.data;
+				$scope.selected_line = $scope.res[0]['id'];
+
+				$scope.getProducts($scope.selected_line, $scope.res[0]['name']);
+			});
+		};
+		$scope.getProductLines();
+		$scope.getProducts = function(chosen, line_name){
+			$scope.selected_line = chosen;
+			$scope.selected_line_name = line_name;
+			$http({
+				url: "/api/products",
+				method: "GET",
+				params: {prod_id: chosen}
+			}).then(function(response){
+				$scope.product_data = response.data;
+				
+			});
+		}
+
+		$scope.addProdLine = function(){
+			
+			$http({
+				method: "POST",
+				url: "/api/post/add-prod-line",
+				data: JSON.stringify({name: $scope.prod.addName}),
+				dataType: 'json',
+				contentType: 'application/json'
+			})
+			.then(function(response){
+				alert(response.data);
+				if (response.data == "Success")
+					$scope.getProductLines();
+			});
+		};
+
+		$scope.addProd = function(){
+			$scope.nprod.line_id = $scope.selected_line;
+			console.log($scope.nprod);
+			$http({
+				method:  "POST",
+				url: "api/post/add-prod",
+				data: JSON.stringify($scope.nprod),
+				dataType: 'json',
+				contentType: 'application/json'
+
+			}).then(function(response){
+				$scope.getProducts($scope.selected_line, $scope.selected_line_name);
+				alert(response.data);
+			});
+		};
+	});
+
+</script>
+</body>
+</html>
