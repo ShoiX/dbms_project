@@ -1,0 +1,41 @@
+<!DOCTYPE>
+<html ng-app="myApp" ng-controller="myCtrl"">
+<head>
+	<title>Inventory Bullshit</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="lib/css/bootstrap.min.css">
+	<script src="/lib/js/jquery-3.3.1.min.js"></script>
+	<script src="/lib/js/bootstrap.min.js"></script>
+	<script src="/lib/js/angular.js"></script>
+	<link rel="stylesheet" href="lib/css/global.css">
+</head>
+<body style="width: 100%; overflow-x: hidden;">
+	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="/"><h2 style="font-size: 140%;">DBMS Inventory</h2></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="">Dashnoard</a>
+      </li>
+      <li class="nav-item <%= prod %>">
+        <a class="nav-link" href="/">Products<span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="">Supply</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="">Settings</a>
+      </li>
+      
+    </ul>
+    <form class="form-inline my-2 my-lg-0">
+      <li><a href="">Log-out</a></li>
+    </form>
+  </div>
+</nav>
+	<div class="fluid-container">
