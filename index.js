@@ -4,6 +4,8 @@ var mysql = require('mysql');
 var bodyParser = require('body-parser');
 var moment = require('moment-timezone')
 var fs = require('fs');
+var sessionExpress = require('express-session');
+var sha256 = require('sha256');
 
 /*config*/
 var app = express();
@@ -12,12 +14,46 @@ var app = express();
 app.set('view engine', 'ejs');
 
 var jsonParser = bodyParser.json();
+var urlParser = bodyParser.urlencoded({ extended: false });
+
 var con = require('./include/connection');	//db connection
 
 var constants = require('./include/constants');
 
 // set static files directory
 app.use('/lib', express.static(__dirname + '/views/lib/'));
+
+// use session middleware
+app.use(sessionExpress({
+	secret: constants.SESSION_SECRET,
+	saveUninitialized: false,
+	resave: false
+}));
+
+app.get('/login', function(req, res){
+	
+	if (req.session.user){
+		
+		res.redirect('/');
+	}
+	else{
+		
+		res.render('login', {errors: req.session.login_error});
+		
+		if (req.session.login_error){
+			req.session.destroy(function(err){});
+		}
+	}
+});
+
+app.get('/', function(req, res){
+	
+	
+	if (req.session.user)
+    	res.render('test', {prod: 'active',});
+    else
+    	res.redirect('/login');
+});
 
 app.get('/api/product-lines', function(req, res){
 	con.query('SELECT * FROM `tblproductlines` WHERE line_status = 1 ORDER BY `line_id` ASC', function(err, rows){
@@ -107,7 +143,7 @@ app.post("/api/post/add-prod", jsonParser, function(req, res){
 				'${pdata.desc}',
 				${pdata.price},
 				${pdata.qty})`;
-				console.log(q);
+				
 			con.query(q, function(err2, rows2){
 					if (err2)
 						throw err2;
@@ -151,9 +187,35 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
 	});
 });
 
+// user-login
+ app.post('/post/login', urlParser, function(req, res){
+ 	
+ 	var pass = sha256(req.body.password);
 
-app.get('/', function(req, res){
+ 	var uname = req.body.username;
 
-    res.render('test', {prod: 'active'});
-});
+ 	// retrieve user info
+ 	con.query(`SELECT * FROM tblusers where user_loginname = '${uname}'`, function(err, results){
+ 		if (err)
+ 			throw err;
+ 		
+ 		if (results.length == 0 || pass != results[0].user_password){
+ 			req.session.login_error = "Account does not exist";
+ 			res.redirect('/login');
+ 		}
+ 		else{
+ 			var user = results[0];
+ 			// set session variables
+ 			req.session.user = {user_id: user.user_id, fname: user.user_firstname, lname: user.user_lastname};
+ 			res.redirect('/');
+ 		}
+ 	});
+
+ });
+ app.get('/logout', function(req, res){
+ 	req.session.destroy(function(err){
+ 		res.redirect('/');
+ 	});
+ });
+
 app.listen(3000);
