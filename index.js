@@ -2,7 +2,8 @@
 var express = require('express');
 var mysql = require('mysql');
 var bodyParser = require('body-parser');
-var moment = require('moment-timezone')
+var moment_tzone = require('moment-timezone');
+var moment = require('moment');
 var fs = require('fs');
 var sessionExpress = require('express-session');
 var sha256 = require('sha256');
@@ -47,12 +48,85 @@ app.get('/login', function(req, res){
 });
 
 app.get('/', function(req, res){
-	
-	
+		
 	if (req.session.user)
-    	res.render('test', {prod: 'active',});
+    	res.render('home', {activate: {product: 'active'},  name: req.session.user.fname});
     else
     	res.redirect('/login');
+});
+
+app.get('/clients', function(req, res){
+	
+	//if (req.session.user)
+	if (true)
+    	res.render('clients', {activate: {client: 'active'}});
+    else
+    	res.redirect('/login');
+});
+
+// list of clients with id
+app.get('/api/client-select', function(req, res){
+	res.writeHead(200, {'Content-type': 'application/json'});
+	con.query('SELECT client_id, client_firstname, client_lastname FROM tblclients WHERE client_status = 1', function(err, rows){
+		if (err)
+			throw err;
+		var out = [{id: null, name: null}];
+		for (var i = 0; i < rows.length; i++) {
+			out.push({
+				id: rows[i].client_id,
+				name: `${rows[i].client_firstname} ${rows[i].client_lastname}`
+			});
+		}
+		res.end(JSON.stringify(out));
+	});
+});
+
+// list of clients for clients tab
+app.get('/api/clients', function(req,res){
+
+	con.query("SELECT * FROM tblclients WHERE client_status = 1", function(err, rows){
+		if (err)
+			throw err;
+		var json_data = [];
+		rows.forEach(i => {
+			json_data.push({
+				id: i.client_id,
+				name : `${i.client_firstname} ${i.client_lastname}`,
+				email: i.client_email,
+				mobile: i.client_mobile,
+				addr: i.client_address
+			});
+		});
+		
+			res.end(JSON.stringify(json_data));
+	});
+});
+
+app.get('/api/client-details/:id', function(req, res){
+	res.writeHead(200, {'Content-type': 'application/json'});
+			
+	var client_id = req.params.id;
+	// get important details from user
+	con.query(`SELECT client_firstname,
+		client_lastname,
+		client_id,
+		client_date_added,
+		SUM(tblorders.order_amount) AS amt
+		FROM tblclients
+		INNER JOIN tblorders
+		ON tblclients.client_id = tblorders.order_client_id
+		WHERE client_id = ${client_id}`, function(err, rows){
+			if (err)
+				throw err;
+			var d = rows[0];
+			var date_added =  moment(new Date(d.client_date_added)).format("MMMM D YYYY");
+			var to_out = {
+				name: `${d.client_firstname} ${d.client_lastname}`,
+				total_order: d.amt,
+				added: date_added
+			};
+			res.end(JSON.stringify(to_out));	
+		});
 });
 
 app.get('/api/product-lines', function(req, res){
@@ -69,6 +143,8 @@ app.get('/api/product-lines', function(req, res){
     	
     });
 });
+
+
 
 // get list of products based on line_id
 app.get('/api/products', function(req, res){
@@ -160,10 +236,15 @@ app.post("/api/post/add-prod", jsonParser, function(req, res){
 app.post("/api/post/add-order", jsonParser, function(req, res){
 	
 	res.writeHead(200, {'Content-type': 'text/plain'});
+	if(!req.session.user){
+		res.end("Error!");
+		return;
+	}
+	var user_id = req.session.user.user_id;
 	var items = req.body.orders;
 	// get total order and datetime
 	var total = 0;
-	var date_now = moment().tz(constants.my_timezone).format(constants.datetime_format);
+	var date_now = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format);
 ;
 	items.forEach(i => {
     		
@@ -171,7 +252,7 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
     	});
 	
 	// insert parent(orders)
-	con.query(`INSERT INTO tblorders (order_amount, order_delivery_charge, order_date) VALUES (${total}, ${req.body.del_charge}, '${date_now}')`, function(err, result){
+	con.query(`INSERT INTO tblorders (order_amount, order_delivery_charge, order_date, order_user_id, order_client_id) VALUES (${total}, ${req.body.del_charge}, '${date_now}', ${user_id}, ${req.body.client_id})`, function(err, result){
 		if (err)
 			throw err;
 		
@@ -192,10 +273,10 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
  	
  	var pass = sha256(req.body.password);
 
- 	var uname = req.body.username;
+ 	var uname = con.escape(req.body.username);
 
  	// retrieve user info
- 	con.query(`SELECT * FROM tblusers where user_loginname = '${uname}'`, function(err, results){
+ 	con.query(`SELECT * FROM tblusers where user_loginname = ${uname}`, function(err, results){
  		if (err)
  			throw err;
  		
@@ -211,6 +292,36 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
  		}
  	});
 
+ });
+ app.post('/api/post/add-client', jsonParser, function(req, res){
+ 	res.writeHead(200, {'Content-type': 'text/plain'});
+ 	
+ 	// check if user already exists
+ 	con.query(`SELECT client_id FROM tblclients WHERE client_firstname = '${req.body.fname}' AND client_lastname = '${req.body.lname}'`, function(err, rows){
+ 		if (err)
+ 			throw err;
+ 		if (rows.length > 0){
+ 			res.end("Client Already Exist");
+ 		}
+ 		else{
+ 			var date_now = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format);
+ 			var d = req.body;
+ 			// insert data to the table
+ 			con.query(`INSERT INTO tblclients (client_firstname, client_lastname, client_mobile, client_email, client_address, client_date_added)
+ 				VALUES (
+ 				'${d.fname}',
+ 				'${d.lname}',
+ 				'${d.mobile}',
+ 				'${d.email}',
+ 				'${d.addr}',
+ 				'${date_now}'
+ 				)`, function(err, rows){
+ 					if (err)
+ 						throw err;
+ 					res.end("Success");
+ 				});
+ 		}
+ 	});
  });
  app.get('/logout', function(req, res){
  	req.session.destroy(function(err){

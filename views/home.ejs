@@ -1,4 +1,5 @@
 <% include partials/header.ejs %>
+	<div class="fluid-container">
 
 		<div class="row" style="">
 			<div class="col col-md-2  border" style="">
@@ -17,17 +18,18 @@
 				<table class="table table-hover table-striped" style="margin-left: 2%; margin-right: 3%;">
 					<thead> 
 					 	<tr>
+					 		<th></th>
 							<th>ID</th>
 							<th>Product Name</th>
 							<th style="min-width: 30%;">Description</th>
 							<th>Price</th>
 							<th>Quantity</th>
 							<th>Actions</th>
-							<th></th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr ng-repeat="x in product_data">
+							<td><input type="checkbox" ng-model="checked[x.prod_id.toString()][0]" ng-click="toggleProd(x.prod_id, x.name, x.price, x.qty)"></td>
 							<td>{{x.prod_id}}</td>
 							<td>{{x.name}}</td>
 							<td>{{x.desc}}</td>
@@ -35,7 +37,6 @@
 							<td>{{x.qty}}</td>
 							<td><a href="">Edit</a> &#160
 								<a href=""> Delete</a></td>
-							<td><input type="checkbox" ng-model="checked[x.prod_id.toString()][0]" ng-click="toggleProd(x.prod_id, x.name, x.price, x.qty)"></td>
 						</tr>
 					</tbody>
 				</table>
@@ -119,7 +120,6 @@
 	    </div>
 	  </div>
 	</div>
-	
 	<!-- Modal for Ordering-->
 	<div class="modal fade" id="orderProdModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
 	  <div class="modal-dialog modal-lg" role="document" style="max-width: 600px;">
@@ -143,6 +143,12 @@
 			      </tr>
 			    </thead>
 			    <tbody>
+			    	<div class="form-group">
+				    	<label>Client:</label>
+				    	<select name="client_list" ng-model="cl_id" >
+				    		<option ng-repeat="y in clients" value="{{y.id}}">{{y.name}}</option>
+				    	</select>
+				    </div>
 			      <tr ng-repeat="d in checked">
 			      	<td>{{d[2]}}</td>
 			      	<td><input type="number" min="1" max={{d[4]}} ng-min="1" ng-max="d[4]" ng-model="d[5]" style="width: 50%;"></td>
@@ -156,7 +162,7 @@
 	      </div>
 	      <div class="modal-footer">
 	      	<div><label>Delivery Charge: </label><input type="number" ng-model="del_charge" ng-min="0" value="0"></div>
-	        <button type="submit" class="btn btn-default" ng-disabled="placeOrders.$invalid">Place Order</button>
+	        <button type="submit" class="btn btn-default" ng-disabled="placeOrders.$invalid || !cl_id">Place Order</button>
 	      </div>
 	  </form>
 	    </div>
@@ -181,6 +187,8 @@
 		$scope.n  = 0;	// number of items checked
 		$scope.orderTotal = 0;
 		$scope.del_charge = 0;
+		$scope.cl_id = null;
+		$scope.clients = [];
 		// get product lines
 		$scope.getProductLines = function(){
 			$http.get("/api/product-lines").then(function(response){
@@ -190,7 +198,18 @@
 				$scope.getProducts($scope.selected_line, $scope.res[0]['name']);
 			});
 		};
+		$scope.getClients = function(){
+
+			$http.get("/api/client-select").then(function(response){
+				
+				$scope.clients = response.data;
+				
+
+			});
+		}
+		
 		$scope.getProductLines();
+		$scope.getClients();
 		$scope.getProducts = function(chosen, line_name){
 			
 			$scope.selected_line = chosen;
@@ -250,8 +269,8 @@
 			else
 			{
 
-				// [checker, product_id, name, unit price of product, qty available, quantity to order]
-				$scope.checked[index] = [true, id, name, unit_price, qty, 1];
+				// [checker, product_id, name, unit price of product, qty available, quantity to order], client_id
+				$scope.checked[index] = [true, id, name, unit_price, qty, 1, null];
 				$scope.n += 1;
 			}
 		}
@@ -262,7 +281,7 @@
 			// build Order JSON object
 			var toOrder = {};
 			toOrder.del_charge = $scope.del_charge;
-			
+			toOrder.client_id = $scope.cl_id;
 			toOrder.orders = [];
 			for (var k in $scope.checked){
 				var d = $scope.checked;
@@ -284,6 +303,11 @@
 
 			}).then(function(response){
 				alert(response.data);
+				$scope.checked = {};
+				$scope.del_charge = 0;
+				$('#orderProdModal').modal('hide');
+				$scope.n = 0;
+				$scope.cl_id = null;
 			});
 		}
 	}).filter('sumOrders', function(){

@@ -1,0 +1,194 @@
+<% include partials/header.ejs %>
+	<div class="fluid-container">
+		<div class="row border">
+			<span style="margin: 1%; margin-left: 3%;">
+				<button class="btn btn-primary" data-toggle="modal" data-target="#addClientModal">Add New Client</button>
+			</span>
+		</div>
+
+		<div class="row">
+			<div class="col-md-12">
+				<div style="height: 450px;">
+					<table class="table table-hover table-striped">
+						<thead>
+							<tr>
+								<th>Client ID</th>
+								<th>Client Name</th>
+								<th>Client Email</th>
+								<th>Client Mobile</th>
+								<th>Address</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="x in res">
+								<td>{{x.id}}</td>
+								<td><a href="" data-toggle="modal" data-target="#clientDetailModal" ng-click="getClientReport(x.id)">{{x.name}}</a></td>
+								<td>{{x.email}}</td>
+								<td>{{x.mobile}}</td>
+								<td>{{x.addr}}</td>
+								<td><a href="">Edit</a> &#160
+								<a href=""> Delete</a></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			
+		</div>
+	</div>
+	<!-- Modal for Adding Product Line-->
+	<div class="modal fade addmodal" id="addProdModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Add Product line</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+
+	         <form name="addProdForm" ng-submit="addProdLine()">
+			  <div class="form-group">
+			    <label for="prod_name">Product Line Name:</label>
+			    <input type="text" class="form-control" name="prod_name" ng-minlength="3" ng-model="prod.addName" required/>
+			  </div>
+			  <button class="btn btn-default" ng-disabled="addProdForm.$invalid">Add</button>
+			</form>
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Modal for Client Details -->
+	<div class="modal fade addmodal" id="clientDetailModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Client Detail</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+			  <div class="form-group">
+			    <label for="client_fname">Client Name:</label>
+			    <input type="text" class="form-control"  ng-model="detail.name" disabled/>
+			  </div>
+			  <div class="form-group">
+			    <label for="client_fname">Date Added:</label>
+			    <input type="text" class="form-control"  ng-model="detail.added" disabled/>
+			  </div>
+			  <div class="form-group">
+			    <label for="client_fname">Total Order Amount:</label>
+			    <input type="text" class="form-control"  ng-model="detail.total" disabled/>
+			  </div>
+			  
+			  </div>
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Modal for Adding Client-->
+	<div class="modal fade addmodal" id="addClientModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Client Details</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+
+	         <form name="newClient" ng-submit="addClient()">
+			  <div class="form-group">
+			    <label for="client_fname">Client Firstname:</label>
+			    <input type="text" class="form-control" name="client_fname" ng-maxlength="60" ng-minlength="4" ng-model="nclient.fname" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="client_lname">Client Lastname:</label>
+			    <input type="text" class="form-control" name="client_lname" ng-maxlength="60" ng-minlength="4" ng-model="nclient.lname" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="client_mobile">Client Mobile Number:</label>
+			    <input type="text" class="form-control" name="client_mobile" ng-maxlength="20" ng-model="nclient.mobile" />
+			  </div>
+			  <div class="form-group">
+			    <label for="client_email">Client Mobile Email:</label>
+			    <input type="email" class="form-control" name="client_email" ng-maxlength="60" ng-model="nclient.email" />
+			  </div>
+			  <div class="form-group">
+			    <label for="client_mobile">Client Address:</label>
+			    <input type="text" class="form-control" name="client_addr" ng-maxlength="100" ng-minlength="5" ng-model="nclient.addr" required/>
+			  </div>
+
+			  
+			  <button type="submit" class="btn btn-default" ng-disabled="newClient.$invalid">SAVE</button>
+			</form>
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	
+	<script type="text/javascript">
+	$(document).ready(function() {
+		$('.addmodal').on('hidden.bs.modal', function(){
+	        $(this).find('form')[0].reset();
+	     });
+	});
+	var app = angular.module("myApp", []);
+
+	app.controller("myCtrl", function($scope, $http){
+		$scope.nclient = {};
+		$scope.detail = {};
+
+		// retrieve list of clients at the database
+		$scope.getClients = function(){
+			$http.get("api/clients").then(function(response){
+				$scope.res = response.data;
+				
+			});
+		}
+		$scope.getClients();
+		// add client to the db
+		$scope.addClient = function(){
+			$http({
+				method: "POST",
+				url: "/api/post/add-client",
+				data: JSON.stringify($scope.nclient),
+				dataType: 'json',
+				contentType: 'application/json'
+			}).then(function(response){
+				alert(response.data);
+				if (response.data == "Success"){
+					$scope.nclient = {};
+					$scope.getClients();
+				}
+			});
+		}
+
+		$scope.getClientReport = function(id){
+			$http.get("/api/client-details/"+id).then(function(response){
+				$scope.detail.name = response.data.name;
+				$scope.detail.added = response.data.added;
+				$scope.detail.total = (response.data.total_order == null) ?"₱ 0.00" : "₱ "+response.data.total_order;
+
+			});
+		}
+		});
+	</script>
+<% include partials/footer.ejs %>
