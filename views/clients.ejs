@@ -1,11 +1,12 @@
 <% include partials/header.ejs %>
+
 	<div class="fluid-container">
 		<div class="row border">
 			<span style="margin: 1%; margin-left: 3%;">
-				<button class="btn btn-primary" data-toggle="modal" data-target="#addClientModal">Add New Client</button>
+				<button class="btn btn-primary" data-toggle="modal" data-target="#addClientModal">Add New Client</button>		
 			</span>
 		</div>
-
+		
 		<div class="row">
 			<div class="col-md-12">
 				<div style="height: 450px;">
@@ -27,8 +28,8 @@
 								<td>{{x.email}}</td>
 								<td>{{x.mobile}}</td>
 								<td>{{x.addr}}</td>
-								<td><a href="">Edit</a> &#160
-								<a href=""> Delete</a></td>
+								<td><a href="" data-toggle="modal" data-target="#editClientModal" ng-click="getEditClient(x.id)">Edit</a> &#160
+								<a href="" ng-click="delClient(x.id)"> Delete</a></td>
 							</tr>
 						</tbody>
 					</table>
@@ -67,11 +68,11 @@
 	</div>
 
 	<!-- Modal for Client Details -->
-	<div class="modal fade addmodal" id="clientDetailModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+	<div class="modal fade " id="clientDetailModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
 	  <div class="modal-dialog" role="document">
 	    <div class="modal-content">
 	      <div class="modal-header">
-	        <h5 class="modal-title" id="exampleModalLabel">Client Detail</h5>
+	        <h5 class="modal-title" id="exampleModalLabel">Client Summary</h5>
 	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
 	          <span aria-hidden="true">&times;</span>
 	        </button>
@@ -121,20 +122,64 @@
 			    <input type="text" class="form-control" name="client_lname" ng-maxlength="60" ng-minlength="4" ng-model="nclient.lname" required/>
 			  </div>
 			  <div class="form-group">
+			    <label for="client_mobile">Client Address:</label>
+			    <input type="text" class="form-control" name="client_addr" ng-maxlength="100" ng-minlength="5" ng-model="nclient.addr" required/>
+			  </div>
+
+			  <div class="form-group">
 			    <label for="client_mobile">Client Mobile Number:</label>
-			    <input type="text" class="form-control" name="client_mobile" ng-maxlength="20" ng-model="nclient.mobile" />
+			    <input type="text" class="form-control" name="client_mobile" ng-maxlength="20" ng-model="nclient.mobile" required/>
 			  </div>
 			  <div class="form-group">
 			    <label for="client_email">Client Mobile Email:</label>
 			    <input type="email" class="form-control" name="client_email" ng-maxlength="60" ng-model="nclient.email" />
 			  </div>
-			  <div class="form-group">
-			    <label for="client_mobile">Client Address:</label>
-			    <input type="text" class="form-control" name="client_addr" ng-maxlength="100" ng-minlength="5" ng-model="nclient.addr" required/>
-			  </div>
-
 			  
 			  <button type="submit" class="btn btn-default" ng-disabled="newClient.$invalid">SAVE</button>
+			</form>
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Modal for Editing Client-->
+	<div class="modal fade " id="editClientModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Edit Client Details</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+
+	         <form name="editClientForm"ng-submit="saveEditClient()">
+			  <div class="form-group">
+			    <label for="client_fname">Client Firstname:</label>
+			    <input type="text" class="form-control" name="client_fname" ng-maxlength="60" ng-minlength="4" ng-model="eclient.fname" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="client_lname">Client Lastname:</label>
+			    <input type="text" class="form-control" name="client_lname" ng-maxlength="60" ng-minlength="4" ng-model="eclient.lname" required/>
+			  </div>
+			   <div class="form-group">
+			    <label for="client_mobile">Client Address:</label>
+			    <input type="text" class="form-control" name="client_addr" ng-maxlength="100" ng-minlength="5" ng-model="eclient.addr" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="client_mobile">Client Mobile Number:</label>
+			    <input type="text" class="form-control" name="client_mobile" ng-maxlength="20" ng-model="eclient.mobile" required />
+			  </div>
+			  <div class="form-group">
+			    <label for="client_email">Client Mobile Email:</label>
+			    <input type="email" class="form-control" name="client_email" ng-maxlength="60" ng-model="eclient.email" />
+			  </div>
+
+			  <button type="submit" class="btn btn-default" ng-disabled="editClientForm.$invalid">SAVE</button>
 			</form>
 	      </div>
 	      <div class="modal-footer">
@@ -153,7 +198,8 @@
 	var app = angular.module("myApp", []);
 
 	app.controller("myCtrl", function($scope, $http){
-		$scope.nclient = {};
+		$scope.nclient = {};	// new client data model
+		$scope.eclient = {};	// edit client data model
 		$scope.detail = {};
 
 		// retrieve list of clients at the database
@@ -183,12 +229,52 @@
 
 		$scope.getClientReport = function(id){
 			$http.get("/api/client-details/"+id).then(function(response){
-				$scope.detail.name = response.data.name;
+				$scope.detail.name = response.data.fname + " " + response.data.lname;
 				$scope.detail.added = response.data.added;
 				$scope.detail.total = (response.data.total_order == null) ?"₱ 0.00" : "₱ "+response.data.total_order;
 
 			});
 		}
+
+		$scope.delClient = function(id){
+			if (!confirm("Delete User?"))
+				return;
+			$http({
+				method: "POST",
+				url: "/api/post/del-client",
+				data: JSON.stringify({client_id: id}),
+				contentType: 'application/json'
+			}).then(function(response){
+				alert(response.data);
+				$scope.getClients();
+			});
+		}
+
+		$scope.getEditClient = function(id){
+			$http.get("/api/client-details/"+id).then(function(response){
+				var d = response.data;
+				$scope.eclient.id = id;
+				$scope.eclient.fname = d.fname;
+				$scope.eclient.lname = d.lname;
+				$scope.eclient.addr = d.addr;
+				$scope.eclient.mobile = d.mobile;
+				$scope.eclient.email = d.email;
+			});
+		}
+
+		$scope.saveEditClient = function(){
+			$http({
+				method: "POST",
+				url: "/api/post/edit-client",
+				data: JSON.stringify($scope.eclient),
+				contentType: 'application/json'
+			}).then(function(response){
+				alert(response.data);
+				$scope.getClients();
+			});
+		}
+
 		});
+
 	</script>
 <% include partials/footer.ejs %>

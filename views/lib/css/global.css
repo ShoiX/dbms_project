@@ -26,3 +26,26 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.sp-prof-img-container {
+    cursor: pointer;
+    width: 100px;
+    height: 100px;
+    position: relative;
+    display: inline-block;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.sp-prof-img-file {
+    cursor: pointer;
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+.sp-prof-img {
+    border-radius: 50px;
+    width: 100%;
+    height: 100%;
+}

@@ -7,10 +7,33 @@ var moment = require('moment');
 var fs = require('fs');
 var sessionExpress = require('express-session');
 var sha256 = require('sha256');
+var multer = require('multer');
+var crypto = require('crypto');
+var mime = require('mime');
+
 
 /*config*/
 var app = express();
 
+// multer configs
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './views/lib/img/products/')
+  },
+  filename: function (req, file, cb) {
+    crypto.pseudoRandomBytes(16, function (err, raw) {
+      cb(null, raw.toString('hex') + Date.now() + '.' + mime.extension(file.mimetype));
+    });
+  }
+});
+
+var upload = multer({
+	storage: storage,
+	limits: {
+		fileSize: 1024 * 1024 * 5	// 5 MB size
+	}
+
+});
 /* set template engine */
 app.set('view engine', 'ejs');
 
@@ -24,13 +47,20 @@ var constants = require('./include/constants');
 // set static files directory
 app.use('/lib', express.static(__dirname + '/views/lib/'));
 
+
+
 // use session middleware
 app.use(sessionExpress({
 	secret: constants.SESSION_SECRET,
 	saveUninitialized: false,
-	resave: false
+	re7d47eba0dbdsave: false
 }));
+app.post('/sample',jsonParser, upload.single('prod_logo'), function(req, res){
+	console.log(JSON.parse(req.body.new_prod).name);
+	if (req.file)
+		console.log("meron");
 
+});
 app.get('/login', function(req, res){
 	
 	if (req.session.user){
@@ -83,7 +113,7 @@ app.get('/api/client-select', function(req, res){
 
 // list of clients for clients tab
 app.get('/api/clients', function(req,res){
-
+	res.writeHead(200, {'Content-type': 'application/json'});
 	con.query("SELECT * FROM tblclients WHERE client_status = 1", function(err, rows){
 		if (err)
 			throw err;
@@ -102,6 +132,8 @@ app.get('/api/clients', function(req,res){
 	});
 });
 
+
+// get some details about the client
 app.get('/api/client-details/:id', function(req, res){
 	res.writeHead(200, {'Content-type': 'application/json'});
 			
@@ -111,7 +143,10 @@ app.get('/api/client-details/:id', function(req, res){
 		client_lastname,
 		client_id,
 		client_date_added,
-		SUM(tblorders.order_amount) AS amt
+		SUM(tblorders.order_amount) AS amt,
+		client_mobile,
+		client_email,
+		client_address
 		FROM tblclients
 		INNER JOIN tblorders
 		ON tblclients.client_id = tblorders.order_client_id
@@ -121,9 +156,13 @@ app.get('/api/client-details/:id', function(req, res){
 			var d = rows[0];
 			var date_added =  moment(new Date(d.client_date_added)).format("MMMM D YYYY");
 			var to_out = {
-				name: `${d.client_firstname} ${d.client_lastname}`,
+				fname: d.client_firstname,
+				lname: d.client_lastname,
 				total_order: d.amt,
-				added: date_added
+				added: date_added,
+				email: d.client_email,
+				mobile: d.client_mobile,
+				addr: d.client_address
 			};
 			res.end(JSON.stringify(to_out));	
 		});
@@ -170,6 +209,19 @@ app.get('/api/products', function(req, res){
 	})
 });
 
+// delete a client
+app.post("/api/post/del-client", jsonParser, function(req, res){
+	var cl_id = req.body.client_id;
+	res.writeHead(200, {'Content-type': 'text/plain'}); 
+	con.query(`UPDATE tblclients 
+		SET client_status = 0
+		WHERE client_id = ${cl_id}`, function(err, rows){
+			if (err)
+				throw err;
+			res.end("Success");
+		});
+});
+
 // adding of new product-line
 app.post("/api/post/add-prod-line", jsonParser, function(req, res){
 	var name = con.escape(req.body.name);
@@ -194,13 +246,13 @@ app.post("/api/post/add-prod-line", jsonParser, function(req, res){
 	
 });
 
-app.post("/api/post/add-prod", jsonParser, function(req, res){
+app.post("/api/post/add-prod", jsonParser, upload.single('prod_logo'), function(req, res){
 
-	var pdata = req.body;
+	var pdata = JSON.parse(req.body.new_prod);
 	
 	res.writeHead(200, {'Content-type': 'text/plain'});
 	// check if name already exists
-	con.query("SELECT product_id FROM tblproducts WHERE product_name = '"+pdata.name+"'", function(err, rows){
+	con.query(`SELECT product_id FROM tblproducts WHERE product_name = ${con.escape(pdata.name)}`, function(err, rows){
 		if (err)
 			throw err;
 		if (rows.length > 0)
@@ -214,16 +266,28 @@ app.post("/api/post/add-prod", jsonParser, function(req, res){
 				product_description,
 				product_price,
 				product_qty) VALUES (
-				'${pdata.name}',
+				${con.escape(pdata.name)},
 				${pdata.line_id},
-				'${pdata.desc}',
+				${con.escape(pdata.desc)},
 				${pdata.price},
 				${pdata.qty})`;
 				
 			con.query(q, function(err2, rows2){
 					if (err2)
 						throw err2;
-					res.end("Product Added Successfully");
+					// there is a prod_logo
+					if (req.file){
+						var in_id = rows2.insertId;
+						var img_name = req.file.filename;
+						// insert name to the database
+						con.query(`UPDATE tblproducts
+						SET product_cover_image = ${con.escape(img_name)}
+						WHERE product_id = ${in_id}  `, function(er, ro){
+							if (er)
+								throw er;
+						});
+					}
+					res.end("Product added Succesfully");
 			});
 		}
 
@@ -268,6 +332,23 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
 	});
 });
 
+//edit client
+app.post('/api/post/edit-client', jsonParser, function(req, res){
+	res.writeHead(200, {'Content-type': 'text/plain'});
+	var d = req.body;
+	con.query(`UPDATE tblclients SET 
+		client_firstname = ${con.escape(d.fname)},
+		client_lastname = ${con.escape(d.lname)},
+		client_mobile = ${con.escape(d.mobile)},
+		client_email = ${con.escape(d.email)},
+		client_address = ${con.escape(d.addr)}
+		WHERE client_id = ${d.id}`, function(err, rows){
+			if (err)
+				throw err;
+			res.end("Success");
+		});
+});
+
 // user-login
  app.post('/post/login', urlParser, function(req, res){
  	
@@ -293,11 +374,13 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
  	});
 
  });
+
+ // add client
  app.post('/api/post/add-client', jsonParser, function(req, res){
  	res.writeHead(200, {'Content-type': 'text/plain'});
  	
  	// check if user already exists
- 	con.query(`SELECT client_id FROM tblclients WHERE client_firstname = '${req.body.fname}' AND client_lastname = '${req.body.lname}'`, function(err, rows){
+ 	con.query(`SELECT client_id FROM tblclients WHERE client_firstname = ${con.escape(req.body.fname)} AND client_lastname = ${con.escape(req.body.lname)}`, function(err, rows){
  		if (err)
  			throw err;
  		if (rows.length > 0){
@@ -309,12 +392,12 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
  			// insert data to the table
  			con.query(`INSERT INTO tblclients (client_firstname, client_lastname, client_mobile, client_email, client_address, client_date_added)
  				VALUES (
- 				'${d.fname}',
- 				'${d.lname}',
- 				'${d.mobile}',
- 				'${d.email}',
- 				'${d.addr}',
- 				'${date_now}'
+ 				${con.escape(d.fname)},
+ 				${con.escape(d.lname)},
+ 				${con.escape(d.mobile)},
+ 				${con.escape(d.email)},
+ 				${con.escape(d.addr)},
+ 				"${date_now}"
  				)`, function(err, rows){
  					if (err)
  						throw err;

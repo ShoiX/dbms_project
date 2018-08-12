@@ -14,7 +14,7 @@
 				</div>
 			</div>
 			<div class="col col-md-10  border" style="">
-				<div style="height: 450px; width: 100%; overflow-y: auto; overflow-x: hidden;">
+				<div style="height: 495px; width: 100%; overflow-y: auto; overflow-x: hidden;">
 				<table class="table table-hover table-striped" style="margin-left: 2%; margin-right: 3%;">
 					<thead> 
 					 	<tr>
@@ -94,6 +94,12 @@
 	      <div class="modal-body">
 
 	         <form name="newProduct" ng-submit="addProd()">
+	         	<div class="form-group">
+	         		<div class="sp-prof-img-container">
+		         		<input accept="image/x-png,image/jpeg,image/jpg"  name="file" id="prod_logo_input" class="sp-prof-img-file" type="file" onchange="loadFile(event)" id="prodLogo">
+						<img style="border-radius: 0px;" id="prod_logo" class="sp-prof-img" src="/lib/img/products/no_content.png"/>
+					</div>
+	         	</div>
 			  <div class="form-group">
 			    <label for="product_name">Product Name:</label>
 			    <input type="text" class="form-control" name="prod_name" ng-maxlength="80" ng-model="nprod.name" required/>
@@ -174,6 +180,9 @@
 	$(document).ready(function() {
 		$('.addmodal').on('hidden.bs.modal', function(){
 	        $(this).find('form')[0].reset();
+	        document.getElementById('prod_logo').src = "/lib/img/products/no_content.png";
+	        console.log(document.getElementById("prod_logo_input").files);
+
 	     });
 	});
 	var app = angular.module("myApp", []);
@@ -244,10 +253,38 @@
 
 		$scope.addProd = function(){
 			$scope.nprod.line_id = $scope.selected_line;
+
+			var logo = document.getElementById("prod_logo_input").files[0];
+			if (logo){
+				// validate image
+				if (logo.size > (1024 * 1024 * 5)){
+					alert("image too big");
+					return;
+				}
+				if (logo.type != "image/jpeg" && logo.type != "image/jpg" && logo.type != "image/png" ){
+					alert("unsuported filetype");
+					return;
+				}
+			}
+			
+			var formData = new FormData();
+			formData.append("prod_logo", logo);
+			formData.append("new_prod", JSON.stringify($scope.nprod));
 			
 			$http({
+				method: 'POST',
+                    url: '/api/post/add-prod',
+                    data: formData,
+                    headers: {
+                        'Content-Type': undefined
+                    }
+			}).then(function(response){
+				alert(response.data);
+				$scope.getProducts($scope.selected_line, $scope.selected_line_name);	
+			});
+			/*$http({
 				method:  "POST",
-				url: "api/post/add-prod",
+				url: "/api/post/add-prod",
 				data: JSON.stringify($scope.nprod),
 				dataType: 'json',
 				contentType: 'application/json'
@@ -255,7 +292,7 @@
 			}).then(function(response){
 				$scope.getProducts($scope.selected_line, $scope.selected_line_name);
 				alert(response.data);
-			});
+			});*/
 		};
 
 		$scope.toggleProd = function(id, name, unit_price, qty){
@@ -296,7 +333,7 @@
 			// send data to server
 			$http({
 				method:  "POST",
-				url: "api/post/add-order",
+				url: "/api/post/add-order",
 				data: JSON.stringify(toOrder),
 				dataType: 'json',
 				contentType: 'application/json'
@@ -322,6 +359,12 @@
 			return total;
 		}
 	});
-
+	var loadFile = function(event){
+		//console.log(event.target);
+		
+		var output = document.getElementById('prod_logo');
+		//console.log(output);
+    	output.src = URL.createObjectURL(event.target.files[0])
+	}
 </script>
 <% include partials/footer.ejs %>
