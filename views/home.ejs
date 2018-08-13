@@ -327,6 +327,8 @@
                     }
 			}).then(function(response){
 				alert(response.data);
+				$scope.nprod = {};
+				$('#addProductModal').modal('hide');
 				$scope.getProducts($scope.selected_line, $scope.selected_line_name);	
 			});
 			/*$http({
