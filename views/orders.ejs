@@ -1,0 +1,116 @@
+<% include partials/header.ejs %>
+	<div class="fluid-container">
+		<div class="row border">
+			<span style="margin: 1%; margin-left: 3%;">
+				<h4>Order Monitoring</h4>	
+			</span>
+		</div>
+		<div class="row border">
+			<div class="col-md-12">
+				<div style="height: 450px;">
+					<table class="table table-hover table-striped">
+						<thead>
+							<tr>
+								<th>Order Date</th>
+								<th>Ref. Number</th>
+								<th>Client</th>
+								<th>Amount</th>
+								<th>Order Status</th>
+								<th>Agent</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="x in orders">
+								<td>{{x.date}}</td>
+								<td>{{x.ref_id}}</td>
+								<td>{{x.cl_name}}</td>
+								<td>{{x.amt}}</td>
+								<td><select>
+									<option></option>
+									<option>Accept</option>
+									<option>Drop</option>
+								</select></td>
+								<td>{{x.agent}}</td>
+								<td><a href="" data-toggle="modal" data-target="#orderDetailsModal" ng-click="showOrderDetails(x.id, x.ref_id)">Details</a> &#160
+								<a href="">Export</a></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="orderDetailsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	  <div class="modal-dialog modal-lg" role="document" style="max-width: 600px;">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Order Summary</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<div>
+	      		<span style="color: blue;">{{selected_ref}}</span>
+	      		<hr>
+	      	</div>
+	      	<div style="height: 320px; overflow-y: auto; overflow-x: hidden;">
+		        <table class="table">
+			    <thead class="thead-dark">
+			      <tr>
+			        <th>Product</th>
+			        <th>Qty</th>
+			        <th>ItemPrice</th>
+			        <th>Total Price</th>
+			      </tr>
+			    </thead>
+			    <tbody>
+			    	<tr ng-repeat="y in details.items">
+			    		<td>{{y.name}}</td>
+			    		<td>{{y.qty}}</td>
+			    		<td>{{y.price}}</td>
+			    		<td>{{y.subtotal}}</td>
+			    	</tr>
+			    </tbody>
+			  </table>
+			</div>
+			<div><span>Delivery Charge: </span><span style="margin-left; color: green;">&#8369;{{details.del_charge}}</span></div>
+	      </div>
+	      <div class="modal-footer">
+	      	<div>
+	      		<span>Total Amount: &#8369;{{details.amt}}</span>
+	      	</div>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('.addmodal').on('hidden.bs.modal', function(){
+		        $(this).find('form')[0].reset();
+		     });
+		});
+		var app = angular.module("myApp", []);
+
+		app.controller("myCtrl", function($scope, $http){
+			$scope.details = {};
+			$scope.getOrderDetails = function(){
+				$http.get("/api/orders").then(function(response){
+					
+					$scope.orders = response.data;
+					
+				});
+			}
+
+			$scope.getOrderDetails();
+			$scope.showOrderDetails = function(id, ref){
+				$http.get("/api/order-summary/"+id).then(function(response){
+					$scope.selected_ref = ref;
+					$scope.details = response.data;
+				});
+			}
+		});
+	</script>
+<% include partials/footer.ejs %>

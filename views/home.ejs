@@ -14,7 +14,7 @@
 				</div>
 			</div>
 			<div class="col col-md-10  border" style="">
-				<div style="height: 495px; width: 100%; overflow-y: auto; overflow-x: hidden;">
+				<div style="height: 470px; width: 100%; overflow-y: auto; overflow-x: hidden;">
 				<table class="table table-hover table-striped" style="margin-left: 2%; margin-right: 3%;">
 					<thead> 
 					 	<tr>
@@ -31,7 +31,7 @@
 						<tr ng-repeat="x in product_data">
 							<td><input type="checkbox" ng-model="checked[x.prod_id.toString()][0]" ng-click="toggleProd(x.prod_id, x.name, x.price, x.qty)"></td>
 							<td>{{x.prod_id}}</td>
-							<td>{{x.name}}</td>
+							<td><a href="" data-toggle="modal" data-target="#prodSummaryModal" ng-click="getProdSummary(x.prod_id)">{{x.name}}</a></td>
 							<td>{{x.desc}}</td>
 							<td>{{x.price}}</td>
 							<td>{{x.qty}}</td>
@@ -126,6 +126,7 @@
 	    </div>
 	  </div>
 	</div>
+
 	<!-- Modal for Ordering-->
 	<div class="modal fade" id="orderProdModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
 	  <div class="modal-dialog modal-lg" role="document" style="max-width: 600px;">
@@ -174,6 +175,52 @@
 	    </div>
 	  </div>
 	</div>
+
+	<!-- Modal for Product Summary -->
+	<div class="modal fade addmodal" id="prodSummaryModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Product Summary</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	         	<div class="form-group">
+	         		<div class="sp-prof-img-container">
+						<img style="border-radius: 0px;" id="prod_logo" class="sp-prof-img" src="{{dprod.prod_logo}}"/>
+					</div>
+	         	</div>
+			  <div class="form-group">
+			    <label for="product_name">Product Name:</label>
+			    <input type="text" class="form-control"  ng-maxlength="80" ng-model="dprod.name" disabled/>
+			  </div>
+			  <div class="form-group">
+			    <label >In Stock Quantity:</label>
+			    <input type="text" class="form-control"  ng-maxlength="80" ng-model="dprod.qty" disabled/>
+			  </div>
+			   <div class="form-group">
+			    <label>Product Price</label>
+			    <input type="text" class="form-control"  ng-maxlength="80" ng-model="dprod.price" disabled/>
+			  </div>
+			  <div class="form-group">
+			    <label>Total Item Sold</label>
+			    <input type="text" class="form-control" ng-maxlength="80" ng-model="dprod.itemsold" disabled/>
+			  </div>
+			  <div class="form-group">
+			    <label>Total Amount Sold</label>
+			    <input type="text" class="form-control" ng-maxlength="80" ng-model="dprod.amtsold" disabled/>
+			  </div>
+			  
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	
 
 
 <script type="text/javascript">
@@ -345,6 +392,19 @@
 				$('#orderProdModal').modal('hide');
 				$scope.n = 0;
 				$scope.cl_id = null;
+			});
+		}
+
+		// get the product summary from server
+		$scope.getProdSummary = function(id){
+			$http.get("/api/product-summary/"+id).then(function(response){
+				$scope.dprod = response.data;
+				if(!$scope.dprod.amtsold)
+					$scope.dprod.amtsold = "0.00";
+				
+				
+				if (!$scope.dprod.itemsold)
+					$scope.dprod.itemsold = "0";
 			});
 		}
 	}).filter('sumOrders', function(){

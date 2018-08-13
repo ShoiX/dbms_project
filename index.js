@@ -13,12 +13,18 @@ var mime = require('mime');
 
 
 /*config*/
+var con = require('./include/connection');	//db connection
+
+var constants = require('./include/constants');
+
+var utils = require('./include/utils');
+
 var app = express();
 
 // multer configs
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, './views/lib/img/products/')
+    cb(null, constants.LOGO_PATH);
   },
   filename: function (req, file, cb) {
     crypto.pseudoRandomBytes(16, function (err, raw) {
@@ -40,9 +46,6 @@ app.set('view engine', 'ejs');
 var jsonParser = bodyParser.json();
 var urlParser = bodyParser.urlencoded({ extended: false });
 
-var con = require('./include/connection');	//db connection
-
-var constants = require('./include/constants');
 
 // set static files directory
 app.use('/lib', express.static(__dirname + '/views/lib/'));
@@ -53,14 +56,9 @@ app.use('/lib', express.static(__dirname + '/views/lib/'));
 app.use(sessionExpress({
 	secret: constants.SESSION_SECRET,
 	saveUninitialized: false,
-	re7d47eba0dbdsave: false
+	resave: false
 }));
-app.post('/sample',jsonParser, upload.single('prod_logo'), function(req, res){
-	console.log(JSON.parse(req.body.new_prod).name);
-	if (req.file)
-		console.log("meron");
 
-});
 app.get('/login', function(req, res){
 	
 	if (req.session.user){
@@ -80,7 +78,7 @@ app.get('/login', function(req, res){
 app.get('/', function(req, res){
 		
 	if (req.session.user)
-    	res.render('home', {activate: {product: 'active'},  name: req.session.user.fname});
+    	res.render('home', {activate: {product: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
     else
     	res.redirect('/login');
 });
@@ -88,11 +86,19 @@ app.get('/', function(req, res){
 app.get('/clients', function(req, res){
 	
 	//if (req.session.user)
-	if (true)
-    	res.render('clients', {activate: {client: 'active'}});
+	if (req.session.user)
+    	res.render('clients', {activate: {client: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
     else
     	res.redirect('/login');
 });
+
+// orders page
+app.get('/orders', function(req, res){
+	if (req.session.user)
+    	res.render('orders', {activate: {orders: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+    else
+    	res.redirect('/login');
+})
 
 // list of clients with id
 app.get('/api/client-select', function(req, res){
@@ -132,6 +138,39 @@ app.get('/api/clients', function(req,res){
 	});
 });
 
+// get product summary
+app.get('/api/product-summary/:pid', jsonParser, function(req, res){
+	res.writeHead(200, {'Content-type': 'application/json'});
+	var id = req.params.pid;
+	con.query(`SELECT
+		product_name,
+		product_description,
+		product_price,
+		product_qty,
+		product_cover_image,
+		SUM(tblorder_items.item_qty) AS total_qty_sold,
+		SUM(tblorder_items.item_subtotal) AS total_amt_sold
+		FROM tblproducts
+		INNER JOIN tblorder_items ON tblproducts.product_id = tblorder_items.item_product_id
+		INNER JOIN tblorders ON tblorder_items.item_order_id = tblorders.order_id AND tblorders.order_status = 1
+		WHERE product_id = ${id}
+		`, function(err, rows){
+			if (err)
+				throw err;
+			var d = rows[0];
+			
+			var out = {
+				prod_logo: constants.STATIC_LOGO_PATH+d.product_cover_image,
+				name: d.product_name,
+				desc: d.product_description,
+				price: d.product_price,
+				qty: d.product_qty,
+				itemsold: d.total_qty_sold,
+				amtsold: d.total_amt_sold
+			};
+			res.end(JSON.stringify(out));
+		});
+});
 
 // get some details about the client
 app.get('/api/client-details/:id', function(req, res){
@@ -208,6 +247,67 @@ app.get('/api/products', function(req, res){
 
 	})
 });
+
+//  list of orders
+app.get("/api/orders", function(req, res){
+	res.writeHead(200, {'Content-type': 'application/json'});
+	con.query(`SELECT tblorders.*,
+		tblclients.client_firstname,
+		tblclients.client_lastname,
+		tblusers.user_firstname,
+		tblusers.user_lastname
+		FROM tblorders
+		INNER JOIN tblclients ON order_client_id = tblclients.client_id
+		INNER JOIN tblusers ON tblorders.order_user_id = tblusers.user_id
+		WHERE order_status != 0
+		ORDER BY order_id DESC`, function(err, rows){
+			if (err)
+				throw err;
+			var out = [];
+			rows.forEach(d =>{
+				out.push({
+					id: d.order_id,
+					ref_id: utils.encode_Id(d.order_id, d.order_date),
+					date: moment(d.order_date).format('MMMM D YYYY'),
+					cl_name: `${d.client_firstname} ${d.client_lastname}`,
+					amt: d.order_amount,
+					agent: `${d.user_firstname} ${d.user_lastname}`
+
+				});
+			});
+			res.end(JSON.stringify(out));
+		});
+});
+
+app.get("/api/order-summary/:id", function(req, res){
+	var oid  = req.params.id;
+	res.writeHead(200, {'Content-type': 'application/json'});
+	con.query(`SELECT order_amount,
+		order_delivery_charge,
+		tblproducts.product_name,
+		tblorder_items.item_qty,
+		tblorder_items.item_subtotal
+		FROM tblorders
+		INNER JOIN tblorder_items ON order_id = tblorder_items.item_order_id
+		INNER JOIN tblproducts ON tblorder_items.item_product_id = tblproducts.product_id
+		WHERE order_id = ${oid}`, function(err, rows){
+			if (err)
+				throw err;
+			var out = {};
+			out.amt = rows[0].order_amount;
+			out.del_charge = rows[0].order_delivery_charge;
+			out.items = [];
+			rows.forEach(d =>{
+				out.items.push({
+					name: d.product_name,
+					qty: d.item_qty,
+					subtotal: d.item_subtotal,
+					price: d.item_subtotal / d.item_qty
+				});
+			});
+			res.end(JSON.stringify(out));
+		})
+})
 
 // delete a client
 app.post("/api/post/del-client", jsonParser, function(req, res){
