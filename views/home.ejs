@@ -177,7 +177,7 @@
 	</div>
 
 	<!-- Modal for Product Summary -->
-	<div class="modal fade addmodal" id="prodSummaryModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+	<div class="modal fade" id="prodSummaryModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
 	  <div class="modal-dialog" role="document">
 	    <div class="modal-content">
 	      <div class="modal-header">
@@ -364,6 +364,8 @@
 		// place order
 		$scope.addOrder = function(){
 			
+			if (!confirm("Add Order Now ?"))
+				return;
 			// build Order JSON object
 			var toOrder = {};
 			toOrder.del_charge = $scope.del_charge;
@@ -394,11 +396,13 @@
 				$('#orderProdModal').modal('hide');
 				$scope.n = 0;
 				$scope.cl_id = null;
+				$scope.getProducts($scope.selected_line, $scope.selected_line_name);
 			});
 		}
 
 		// get the product summary from server
 		$scope.getProdSummary = function(id){
+			document.getElementById('prod_logo').src = '';
 			$http.get("/api/product-summary/"+id).then(function(response){
 				$scope.dprod = response.data;
 				if(!$scope.dprod.amtsold)

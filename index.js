@@ -207,6 +207,8 @@ app.get('/api/client-details/:id', function(req, res){
 		});
 });
 
+
+// get all product-lines
 app.get('/api/product-lines', function(req, res){
 	con.query('SELECT * FROM `tblproductlines` WHERE line_status = 1 ORDER BY `line_id` ASC', function(err, rows){
     	if (err)
@@ -309,6 +311,8 @@ app.get("/api/order-summary/:id", function(req, res){
 		})
 })
 
+/* POST routes */
+
 // delete a client
 app.post("/api/post/del-client", jsonParser, function(req, res){
 	var cl_id = req.body.client_id;
@@ -404,12 +408,13 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
 		res.end("Error!");
 		return;
 	}
+
 	var user_id = req.session.user.user_id;
 	var items = req.body.orders;
 	// get total order and datetime
 	var total = 0;
 	var date_now = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format);
-;
+
 	items.forEach(i => {
     		
     		total += i.qty * i.u_price;
@@ -426,9 +431,16 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
 			con.query(`INSERT INTO tblorder_items (item_order_id, item_product_id, item_qty, item_subtotal) VALUES(${prnt_id}, ${items[i].id}, ${items[i].qty}, ${items[i].qty * items[i].u_price})`, function(err2, results2){
 				if (err2)
 					throw err2;
-				res.end("SUCCESS");
 			});
+			// update product qty
+			con.query(`UPDATE tblproducts
+				SET product_qty = product_qty - ${items[i].qty}
+				WHERE product_id = ${items[i].id}`, function(err3){
+					if (err3)
+						throw err3;
+				});
 		}
+		res.end("Success");
 	});
 });
 
