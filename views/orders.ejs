@@ -1,44 +1,110 @@
 <% include partials/header.ejs %>
 	<div class="fluid-container">
-		<div class="row border">
-			<span style="margin: 1%; margin-left: 3%;">
-				<h4>Order Monitoring</h4>	
-			</span>
+		<div class="row">
+				<h4 style="font-size: 160%; margin: 0 auto;">Order Monitoring</h4>	
 		</div>
+		<div class="row">
+			<ul class="nav nav-tabs" style="margin-left: 2%;">
+				<li class="nav-item"><a data-toggle="tab" href="#pendingTab" class="nav-link active">Pending</a></li>
+				<li class="nav-item"><a data-toggle="tab" href="#acceptedTab" class="nav-link">Approved</a></li>
+				<li class="nav-item"><a data-toggle="tab" href="#droppedTab" class="nav-link">Dropped</a></li>
+			</ul>	
+		</div>
+		
 		<div class="row border">
-			<div class="col-md-12">
-				<div style="height: 430px; overflow-y: auto;">
-					<table class="table table-hover table-striped">
-						<thead>
-							<tr>
-								<th>Order Date</th>
-								<th>Ref. Number</th>
-								<th>Client</th>
-								<th>Amount</th>
-								<th>Order Status</th>
-								<th>Agent</th>
-								<th>Action</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr ng-repeat="x in orders">
-								<td>{{x.date}}</td>
-								<td>{{x.ref_id}}</td>
-								<td>{{x.cl_name}}</td>
-								<td>{{x.amt}}</td>
-								<td><select>
-									<option></option>
-									<option>Accept</option>
-									<option>Drop</option>
-								</select></td>
-								<td>{{x.agent}}</td>
-								<td><a href="" data-toggle="modal" data-target="#orderDetailsModal" ng-click="showOrderDetails(x.id, x.ref_id)">Details</a> &#160
-								<a href="">Export</a></td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
+			<div class="col-md-12" style="height: 460px; overflow-y: auto; ">
+				<div class="tab-content">
+				    <div id="pendingTab" class="tab-pane fade show active">
+				      	<table class="table table-hover table-striped">
+							<thead>
+								<tr>
+									<th>Order Date</th>
+									<th>Ref. Number</th>
+									<th>Client</th>
+									<th>Amount</th>
+									<th>Order Status</th>
+									<th>Agent</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="x in orders.p">
+									<td>{{x.date}}</td>
+									<td>{{x.ref_id}}</td>
+									<td>{{x.cl_name}}</td>
+									<td>{{x.amt}}</td>
+									<td><div class="btn-group">
+										  <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										    Action
+										  </button>
+										  <div class="dropdown-menu">
+										    <a class="dropdown-item" href="#" ng-click="updateOrder(x.id, 'approve')">Approve</a>
+										    <a class="dropdown-item" href="#" ng-click="updateOrder(x.id, 'drop')">Drop</a>
+										  </div>
+										</div>
+									</td>
+									<td>{{x.agent}}</td>
+									<td><a href="" data-toggle="modal" data-target="#orderDetailsModal" ng-click="showOrderDetails(x.id, x.ref_id)">Details</a></td>
+								</tr>
+							</tbody>
+						</table>
+				    </div>
+
+
+				    <div id="acceptedTab" class="tab-pane fade">
+				      <table class="table table-hover table-striped">
+							<thead>
+								<tr>
+									<th>Order Date</th>
+									<th>Ref. Number</th>
+									<th>Client</th>
+									<th>Amount</th>
+									<th>Agent</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="y in orders.a">
+									<td>{{y.date}}</td>
+									<td>{{y.ref_id}}</td>
+									<td>{{y.cl_name}}</td>
+									<td>{{y.amt}}</td>
+									<td>{{y.agent}}</td>
+									<td><a href="" data-toggle="modal" data-target="#orderDetailsModal" ng-click="showOrderDetails(y.id, y.ref_id)">Details</a>&#160
+								<a href="">Export</a></td></td>
+								</tr>
+							</tbody>
+						</table>	
+				    </div>
+
+
+				    <div id="droppedTab" class="tab-pane fade">
+				    	<table class="table table-hover table-striped">
+							<thead>
+								<tr>
+									<th>Order Date</th>
+									<th>Ref. Number</th>
+									<th>Client</th>
+									<th>Amount</th>
+									<th>Agent</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="z in orders.d">
+									<td>{{z.date}}</td>
+									<td>{{z.ref_id}}</td>
+									<td>{{z.cl_name}}</td>
+									<td>{{z.amt}}</td>
+									<td>{{z.agent}}</td>
+									<td><a href="" data-toggle="modal" data-target="#orderDetailsModal" ng-click="showOrderDetails(z.id, z.ref_id)">Details</a></td>
+								</tr>
+							</tbody>
+						</table>
+				    </div>
+				  </div>
 			</div>
+		  
 		</div>
 	</div>
 	<div class="modal fade" id="orderDetailsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -96,10 +162,19 @@
 
 		app.controller("myCtrl", function($scope, $http){
 			$scope.details = {};
+			$scope.orders = {};
+			// get 3 types of order in the db
 			$scope.getOrderDetails = function(){
-				$http.get("/api/orders").then(function(response){
+				$http.get("/api/orders/pending").then(function(response){
+					$scope.orders.p = response.data;
 					
-					$scope.orders = response.data;
+				});
+				$http.get("/api/orders/approved").then(function(response){
+					$scope.orders.a = response.data;
+					
+				});
+				$http.get("/api/orders/dropped").then(function(response){
+					$scope.orders.d = response.data;
 					
 				});
 			}
@@ -110,6 +185,26 @@
 					$scope.selected_ref = ref;
 					$scope.details = response.data;
 				});
+			}
+
+			$scope.updateOrder = function(oid, type){
+				console.log(type);
+				if(!confirm(type+" Selected Order?"))
+					return;
+				
+				$http({
+					method: "POST",
+					url: "/api/post/approve-order",
+					data: JSON.stringify({
+						id: oid,
+						type: type
+					}),
+					dataType: 'json',
+					contentType: 'application/json'
+				}).then(function(response){
+					alert(response.data);
+					$scope.getOrderDetails();
+				})
 			}
 		});
 	</script>

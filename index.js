@@ -251,34 +251,45 @@ app.get('/api/products', function(req, res){
 });
 
 //  list of orders
-app.get("/api/orders", function(req, res){
-	res.writeHead(200, {'Content-type': 'application/json'});
-	con.query(`SELECT tblorders.*,
-		tblclients.client_firstname,
-		tblclients.client_lastname,
-		tblusers.user_firstname,
-		tblusers.user_lastname
-		FROM tblorders
-		INNER JOIN tblclients ON order_client_id = tblclients.client_id
-		INNER JOIN tblusers ON tblorders.order_user_id = tblusers.user_id
-		WHERE order_status != 0
-		ORDER BY order_id DESC`, function(err, rows){
-			if (err)
-				throw err;
-			var out = [];
-			rows.forEach(d =>{
-				out.push({
-					id: d.order_id,
-					ref_id: utils.encode_Id(d.order_id, d.order_date),
-					date: moment(d.order_date).format('MMMM D YYYY'),
-					cl_name: `${d.client_firstname} ${d.client_lastname}`,
-					amt: d.order_amount,
-					agent: `${d.user_firstname} ${d.user_lastname}`
+app.get("/api/orders/:type", function(req, res){
+	
 
-				});
+	var type = req.params.type;
+	var stat = {
+		pending: [constants.ORDER.PENDING, 'order_id'],
+		approved: [constants.ORDER.APPROVE, 'order_update_date'],
+		dropped: [constants.ORDER.DROP, 'order_update_date']
+	};
+	
+	if(!stat[type])
+		res.end("Error");
+	con.query(`SELECT tblorders.*,
+	tblclients.client_firstname,
+	tblclients.client_lastname,
+	tblusers.user_firstname,
+	tblusers.user_lastname
+	FROM tblorders
+	INNER JOIN tblclients ON order_client_id = tblclients.client_id
+	INNER JOIN tblusers ON tblorders.order_user_id = tblusers.user_id
+	WHERE order_status = ${stat[type][0]}
+	ORDER BY ${stat[type][1]} DESC`, function(err, rows){
+		if (err)
+			throw err;
+		var out = [];
+		rows.forEach(d =>{
+			out.push({
+				id: d.order_id,
+				ref_id: utils.encode_Id(d.order_id, d.order_date),
+				date: moment(d.order_date).format('MMMM D YYYY'),
+				cl_name: `${d.client_firstname} ${d.client_lastname}`,
+				amt: d.order_amount,
+				agent: `${d.user_firstname} ${d.user_lastname}`
+
 			});
-			res.end(JSON.stringify(out));
 		});
+		res.json(out);
+	});
+	
 });
 
 app.get("/api/order-summary/:id", function(req, res){
@@ -432,13 +443,7 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
 				if (err2)
 					throw err2;
 			});
-			// update product qty
-			con.query(`UPDATE tblproducts
-				SET product_qty = product_qty - ${items[i].qty}
-				WHERE product_id = ${items[i].id}`, function(err3){
-					if (err3)
-						throw err3;
-				});
+			
 		}
 		res.end("Success");
 	});
@@ -517,6 +522,37 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  				});
  		}
  	});
+ });
+
+ app.post('/api/post/approve-order', jsonParser, function(req, res){
+ 	var oid = req.body.id;
+ 	var type = req.body.type;
+ 	var setter = {
+ 		approve: [constants.ORDER.APPROVE, 'Approved'],
+ 		drop: [constants.ORDER.DROP, 'Dropped']
+ 	};
+ 	if(!setter[type]){
+ 		res.end("Error");
+ 		return;
+ 	}
+ 	var now = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format);
+ 	// update database
+ 	con.query(`UPDATE tblorders SET order_status = ${setter[type][0]},
+ 		order_update_date = '${now}'
+ 	 WHERE order_id = ${oid}`, function(err){
+ 		if (err)
+ 			throw err;
+
+ 		// update product qunatity upon approval
+ 		if (type == 'approve'){
+	 		utils.subtractOrder(oid, con, function(){
+	 			res.send("Order Succesfully "+setter[type][1]);
+	 		});
+	 	}
+ 		else
+ 			res.send("Order Succesfully "+setter[type][1]);
+ 	});
+ 	
  });
  app.get('/logout', function(req, res){
  	req.session.destroy(function(err){
