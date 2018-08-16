@@ -445,7 +445,9 @@ app.post("/api/post/add-order", jsonParser, function(req, res){
 			});
 			
 		}
-		res.end("Success");
+		utils.subtractOrder(prnt_id, con, function(){
+			res.end("Success");
+		});
 	});
 });
 
@@ -543,9 +545,9 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  		if (err)
  			throw err;
 
- 		// update product qunatity upon approval
- 		if (type == 'approve'){
-	 		utils.subtractOrder(oid, con, function(){
+ 		// update product qunatity upon rejection
+ 		if (type == 'drop'){
+	 		utils.returnOrder(oid, con, function(){
 	 			res.send("Order Succesfully "+setter[type][1]);
 	 		});
 	 	}
