@@ -152,7 +152,7 @@ app.get('/api/product-summary/:pid', jsonParser, function(req, res){
 		SUM(tblorder_items.item_subtotal) AS total_amt_sold
 		FROM tblproducts
 		INNER JOIN tblorder_items ON tblproducts.product_id = tblorder_items.item_product_id
-		INNER JOIN tblorders ON tblorder_items.item_order_id = tblorders.order_id AND tblorders.order_status = 1
+		INNER JOIN tblorders ON tblorder_items.item_order_id = tblorders.order_id AND tblorders.order_status = ${constants.ORDER.APPROVE}
 		WHERE product_id = ${id}
 		`, function(err, rows){
 			if (err)
@@ -188,7 +188,7 @@ app.get('/api/client-details/:id', function(req, res){
 		client_address
 		FROM tblclients
 		INNER JOIN tblorders
-		ON tblclients.client_id = tblorders.order_client_id
+		ON tblclients.client_id = tblorders.order_client_id AND tblorders.order_status = ${constants.ORDER.APPROVE}
 		WHERE client_id = ${client_id}`, function(err, rows){
 			if (err)
 				throw err;
