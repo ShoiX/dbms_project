@@ -1,5 +1,6 @@
 /*include node packages*/
 var express = require('express');
+
 var mysql = require('mysql');
 var bodyParser = require('body-parser');
 var moment_tzone = require('moment-timezone');
@@ -20,6 +21,11 @@ var constants = require('./include/constants');
 var utils = require('./include/utils');
 
 var app = express();
+
+// route config
+var apiroutes = require('./routes/apiroutes');
+
+app.use('/api', apiroutes);
 
 // multer configs
 var storage = multer.diskStorage({

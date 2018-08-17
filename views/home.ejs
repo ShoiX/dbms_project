@@ -487,7 +487,8 @@
 
 		// get the product summary from server
 		$scope.getProdSummary = function(id){
-			//document.getElementById('prod_logo_display').src = '';
+			document.getElementById('prod_logo_display').src = '';
+			$scope.dprod = {};
 			$http.get("/api/product-summary/"+id).then(function(response){
 				$scope.dprod = response.data;
 				if(!$scope.dprod.amtsold)
