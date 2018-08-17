@@ -228,6 +228,9 @@
 		}
 
 		$scope.getClientReport = function(id){
+			$scope.detail.name = '';
+			$scope.detail.added = '';
+			$scope.detail.total = '';
 			$http.get("/api/client-details/"+id).then(function(response){
 				$scope.detail.name = response.data.fname + " " + response.data.lname;
 				$scope.detail.added = response.data.added;
@@ -251,6 +254,7 @@
 		}
 
 		$scope.getEditClient = function(id){
+			$scope.eclient = {};
 			$http.get("/api/client-details/"+id).then(function(response){
 				var d = response.data;
 				$scope.eclient.id = id;

@@ -181,7 +181,9 @@
 
 			$scope.getOrderDetails();
 			$scope.showOrderDetails = function(id, ref){
+				$scope.details = {};
 				$http.get("/api/order-summary/"+id).then(function(response){
+
 					$scope.selected_ref = ref;
 					$scope.details = response.data;
 				});

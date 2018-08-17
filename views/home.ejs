@@ -543,6 +543,7 @@
 		}
 
 		$scope.showEditProd = function(data){
+			document.getElementById('prod_logo_edit').src = "";
 			$scope.editprod = data;
 			document.getElementById('prod_logo_edit').src = "/lib/img/products/"+$scope.editprod.logo;
 
