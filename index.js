@@ -240,7 +240,8 @@ app.get('/api/products', function(req, res){
 				name: items.product_name,
 				desc: items.product_description,
 				price: items.product_price,
-				qty: items.product_qty
+				qty: items.product_qty,
+				logo: items.product_cover_image
 			})
 		});
 		
@@ -361,6 +362,44 @@ app.post("/api/post/add-prod-line", jsonParser, function(req, res){
 	
 });
 
+// editing of product-line
+app.post("/api/post/edit-prod-line", jsonParser, function(req, res){
+	var eid = req.body.id;
+	var ename = con.escape(req.body.name);
+	// check if there is an existing name
+	con.query(`SELECT line_id
+		FROM tblproductlines
+		WHERE line_name = ${ename} AND line_id != ${eid} AND line_status = 1`, function(err, rows){
+			if(err)
+				throw err;
+			if (rows.length > 0){
+				res.send("Line Name Already Exists");
+			}
+			// update
+			else{
+				con.query(`UPDATE tblproductlines SET line_name = ${ename}
+					WHERE line_id = ${eid}`, function(er){
+						if (er)
+							throw er;
+						res.send("Success");
+					});
+			}
+		})
+});
+
+// deletion of Product
+app.post("/api/post/del-product", jsonParser, function(req, res){
+	// update products field
+	var pid = req.body.id;
+	con.query(`UPDATE tblproducts 
+		SET product_status = 0
+		WHERE product_id = ${pid}`, function(err){
+			if (err)
+				throw err;
+			res.send("Success");
+		});
+});
+
 app.post("/api/post/add-prod", jsonParser, upload.single('prod_logo'), function(req, res){
 
 	var pdata = JSON.parse(req.body.new_prod);
@@ -407,6 +446,46 @@ app.post("/api/post/add-prod", jsonParser, upload.single('prod_logo'), function(
 		}
 
 	});
+	
+});
+
+app.post("/api/post/edit-prod", jsonParser, upload.single('prod_logo'), function(req, res){
+
+	var pdata = JSON.parse(req.body.edit_prod);
+	// check if name already exists
+	con.query(`SELECT product_id FROM tblproducts WHERE product_name = ${con.escape(pdata.name)} AND product_id  != ${pdata.prod_id} AND product_status = 1`, (err, rows)=>{
+		if (err)
+			throw err;
+		if (rows.length > 0)
+			res.send("Product Already exists");
+		else{
+			// update table
+			con.query(`UPDATE tblproducts
+				SET product_name = ${con.escape(pdata.name)},
+				product_description = ${con.escape(pdata.desc)},
+				product_price = ${con.escape(pdata.price)},
+				product_qty = ${con.escape(pdata.qty)}
+				WHERE product_id  = ${pdata.prod_id}`, function(er){
+					if (er)
+						throw er;
+
+					// check if there is a photo
+					if (req.file){
+						var img_name = req.file.filename;
+						if (pdata.logo != 'no_content.png'){
+							// delete existing photo in the server
+							fs.unlink(constants.LOGO_PATH+pdata.logo, function(xer){});
+						}
+
+						// update name in the database
+						con.query(`UPDATE tblproducts
+							SET product_cover_image = ${con.escape(img_name)}
+							WHERE product_id = ${pdata.prod_id}`, function(){});
+					}
+					res.send("Success");				
+				});
+		}
+	})
 	
 });
 

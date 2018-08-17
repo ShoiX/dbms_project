@@ -9,7 +9,7 @@
 				</div>
 				<div class="form-group" style="height: 470px; overflow-y: auto;">
 					<ul class="list-group">
-						<li ng-repeat="x in res" value="{{x.id}}" ng-click="getProducts(x.id, x.name);" class="line-list list-group-item {{active[x.name]}}">{{x.name}}</li>	
+						<li ng-repeat="x in res" value="{{x.id}}" ng-click="getProducts(x.id, x.name);" class="line-list list-group-item {{active[x.name]}}">{{x.name}} &#160 <i class="fa fa-edit" ng-click="editLineName(x.id, x.name)" data-toggle="modal" data-target="#editLineModal"></i></li>	
 					</ul>
 				</div>
 			</div>
@@ -35,8 +35,8 @@
 							<td>{{x.desc}}</td>
 							<td>{{x.price}}</td>
 							<td>{{x.qty}}</td>
-							<td><a href="">Edit</a> &#160
-								<a href=""> Delete</a></td>
+							<td><a href="" ng-click="showEditProd(x)" data-toggle="modal" data-target="#editProdModal">Edit</a> &#160
+								<a href="" ng-click="delLine(x.prod_id)"> Delete</a></td>
 						</tr>
 					</tbody>
 				</table>
@@ -72,6 +72,33 @@
 			    <input type="text" class="form-control" name="prod_name" ng-minlength="3" ng-model="prod.addName" required/>
 			  </div>
 			  <button class="btn btn-default" ng-disabled="addProdForm.$invalid">Add</button>
+			</form>
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Modal for Editing Product Line-->
+	<div class="modal fade" id="editLineModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Edit Product line</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+
+	         <form name="editProdForm" ng-submit="submitEditLine()">
+			  <div class="form-group">
+			    <label for="prod_name">Product Line Name:</label>
+			    <input type="text" class="form-control" name="eprod_name" ng-minlength="3" ng-model="eprod.editName" required/>
+			  </div>
+			  <button class="btn btn-default" ng-disabled="editProdForm.$invalid">Update</button>
 			</form>
 	      </div>
 	      <div class="modal-footer">
@@ -118,6 +145,52 @@
 			    <input type="number" class="form-control" name="product_price" ng-model="nprod.price" required/>
 			  </div>
 			  <button class="btn btn-default" ng-disabled="newProduct.$invalid">Add Product</button>
+			</form>
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Modal for Editing Product-->
+	<div class="modal fade editmodal" id="editProdModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Edit Product Details</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+
+	         <form name="editProduct" ng-submit="editProd()">
+	         	<div class="form-group">
+	         		<div class="sp-prof-img-container">
+		         		<input accept="image/x-png,image/jpeg,image/jpg"  name="file" id="eprod_logo_input" class="sp-prof-img-file" type="file" onchange="loadFile(event, 'prod_logo_edit')" id="prodLogoEdit">
+						<img style="border-radius: 0px;" id="prod_logo_edit" class="sp-prof-img" src="/lib/img/products/{{editprod.logo}}"/>
+					</div>
+	         	</div>
+			  <div class="form-group">
+			    <label for="product_name">Product Name:</label>
+			    <input type="text" class="form-control" name="prod_name" ng-maxlength="80" ng-model="editprod.name" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="product_desc">Product Description:</label>
+			    <textarea class="form-control" rows="3"  name="product_desc" ng-model="editprod.desc" ng-minlength="8" ng-maxlength="200" required></textarea>
+			  </div>
+			  
+			  <div class="form-group">
+			    <label for="product_qty">Product Quantity:</label>
+			    <input type="number" class="form-control" name="product_qty" ng-model="editprod.qty" min="1" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="product_price">Product Price:</label>
+			    <input type="number" class="form-control" name="product_price" ng-model="editprod.price" required/>
+			  </div>
+			  <button class="btn btn-default" ng-disabled="editProduct.$invalid">Edit Product</button>
 			</form>
 	      </div>
 	      <div class="modal-footer">
@@ -225,11 +298,15 @@
 
 <script type="text/javascript">
 	$(document).ready(function() {
+		document.getElementById("eprod_logo_input").value = "";
+		document.getElementById("prod_logo_input").value = "";
+
 		$('.addmodal').on('hidden.bs.modal', function(){
 	        $(this).find('form')[0].reset();
 	        document.getElementById('prod_logo').src = "/lib/img/products/no_content.png";
-	        console.log(document.getElementById("prod_logo_input").files);
-
+	     });
+		$('.editmodal').on('hidden.bs.modal', function(){
+	        document.getElementById("eprod_logo_input").value = "";
 	     });
 	});
 	var app = angular.module("myApp", []);
@@ -245,6 +322,8 @@
 		$scope.del_charge = 0;
 		$scope.cl_id = null;
 		$scope.clients = [];
+		$scope.eprod = {};
+		$scope.editprod = {};
 		// get product lines
 		$scope.getProductLines = function(){
 			$http.get("/api/product-lines").then(function(response){
@@ -302,17 +381,8 @@
 			$scope.nprod.line_id = $scope.selected_line;
 
 			var logo = document.getElementById("prod_logo_input").files[0];
-			if (logo){
-				// validate image
-				if (logo.size > (1024 * 1024 * 5)){
-					alert("image too big");
-					return;
-				}
-				if (logo.type != "image/jpeg" && logo.type != "image/jpg" && logo.type != "image/png" ){
-					alert("unsuported filetype");
-					return;
-				}
-			}
+			if (!valid_logo(logo))
+				return;
 			
 			var formData = new FormData();
 			formData.append("prod_logo", logo);
@@ -331,18 +401,31 @@
 				$('#addProductModal').modal('hide');
 				$scope.getProducts($scope.selected_line, $scope.selected_line_name);	
 			});
-			/*$http({
-				method:  "POST",
-				url: "/api/post/add-prod",
-				data: JSON.stringify($scope.nprod),
-				dataType: 'json',
-				contentType: 'application/json'
-
-			}).then(function(response){
-				$scope.getProducts($scope.selected_line, $scope.selected_line_name);
-				alert(response.data);
-			});*/
 		};
+
+		// submit edit
+		$scope.editProd = function(){
+			if (!confirm("Save Changes?"))
+				return;
+
+			var logo = document.getElementById("eprod_logo_input").files[0];
+			if (!valid_logo(logo))
+				return;
+			var formData = new FormData();
+			formData.append("prod_logo", logo);
+			formData.append("edit_prod", JSON.stringify($scope.editprod));
+			$http({
+				method: 'POST',
+                    url: '/api/post/edit-prod',
+                    data: formData,
+                    headers: {
+                        'Content-Type': undefined
+                    }
+			}).then(function(response){
+				alert(response.data);
+				$scope.getProducts($scope.selected_line, $scope.selected_line_name);	
+			});
+		}
 
 		$scope.toggleProd = function(id, name, unit_price, qty){
 			
@@ -400,6 +483,8 @@
 			});
 		}
 
+
+
 		// get the product summary from server
 		$scope.getProdSummary = function(id){
 			//document.getElementById('prod_logo_display').src = '';
@@ -413,6 +498,54 @@
 					$scope.dprod.itemsold = "0";
 			});
 		}
+
+		$scope.editLineName = function(id, lname){
+			$scope.eprod.editName = lname;
+			$scope.eprod.editId = id;
+			
+		}
+		$scope.submitEditLine = function(){
+			
+			$http({
+				method: "POST",
+				url: "/api/post/edit-prod-line",
+				data: JSON.stringify({
+					id: $scope.eprod.editId, 
+					name: $scope.eprod.editName}),
+				dataType: 'json',
+				contentType: 'application/json'
+			})
+			.then(function(response){
+				alert(response.data);
+				if (response.data == "Success")
+					$scope.getProductLines();
+			});
+		}
+
+		$scope.delLine = function(pid){
+			if (!confirm("Delete Product?"))
+				return;
+
+			$http({
+				method: "POST",
+				url: "/api/post/del-product",
+				data: JSON.stringify({
+					id: pid}),
+				dataType: 'json',
+				contentType: 'application/json'
+			})
+			.then(function(response){
+				alert(response.data);
+				$scope.getProducts($scope.selected_line, $scope.selected_line_name);
+				
+			});
+		}
+
+		$scope.showEditProd = function(data){
+			$scope.editprod = data;
+			document.getElementById('prod_logo_edit').src = "/lib/img/products/"+$scope.editprod.logo;
+
+		}
 	}).filter('sumOrders', function(){
 		return function(order_data){
 			if(angular.equals(order_data, {})){
@@ -425,12 +558,32 @@
 			return total;
 		}
 	});
-	var loadFile = function(event){
+	var loadFile = function(event, src){
 		//console.log(event.target);
-		
-		var output = document.getElementById('prod_logo');
+		var output;
+		if (src == 'prod_logo_edit')
+			output = document.getElementById(src);
+		else
+			output = document.getElementById('prod_logo');
 		//console.log(output);
     	output.src = URL.createObjectURL(event.target.files[0])
+	}
+
+	function valid_logo(logo){
+		
+		var out = true;
+		if (logo){
+			// validate image
+			if (logo.size > (1024 * 1024 * 5)){
+				alert("image too big");
+				out = false;
+			}
+			if (logo.type != "image/jpeg" && logo.type != "image/jpg" && logo.type != "image/png" ){
+				alert("unsuported filetype");
+				out = false;
+			}
+		}
+		return out;
 	}
 </script>
 <% include partials/footer.ejs %>
