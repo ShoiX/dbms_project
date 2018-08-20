@@ -2,14 +2,14 @@
 <body style="width: 100%; overflow-x: hidden; margin: 0 auto; overflow-y: hidden" ng-app="myApp" ng-controller="myCtrl">
 	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <a class="navbar-brand" href="/"><h2 style="font-size: 140%;">DBMS Inventory</h2></a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContenumbernt" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
 
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item">
-        <a class="nav-link" href="">Dashnoard</a>
+        <a class="nav-link <%= activate.dashboard %>" href="/dashboard">Dashnoard</a>
       </li>
       <li class="nav-item <%= activate.product %>">
         <a class="nav-link" href="/">Products</a>
@@ -20,11 +20,11 @@
       <li class="nav-item <%= activate.client %>">
         <a class="nav-link" href="/clients" >Clients</a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item <%= activate.supply %>">
         <a class="nav-link" href="">Supply</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="">Settings</a>
+      <li class="nav-item <%= activate.settings %>">
+        <a class="nav-link" href="/settings">Settings</a>
       </li>
       
     </ul>

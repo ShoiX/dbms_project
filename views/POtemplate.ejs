@@ -1,0 +1,179 @@
+<style type="text/css">
+    table{
+    width:100%;
+    margin:auto;
+    }
+
+    table ,th ,td{
+        -webkit-print-color-adjust: exact;
+        border: 1px solid black !important;
+        border-collapse: collapse;
+    }
+
+    th, td{
+        padding: 1px 5px;
+        text-align: center;
+    }
+
+    th{
+        -webkit-print-color-adjust: exact;
+        background-color: #023d59 !important;
+        color:white !important;
+
+    }
+
+    .maincontainer{
+        padding: 10px 50px;
+    }
+
+    .detailcontainer > ul{
+        padding: 10px 10px;
+        margin: 1px;
+        border-collapse: collapse;
+        text-align: right;
+        float:left;
+    }
+
+    .detailcontainer > div{
+        padding: 10px 10px;
+        margin: 1px;
+        border: 1px solid black;
+        border-collapse: collapse;
+        text-align: left;
+        float: center;
+        font-weight: bold;
+    }
+
+    .lowercontainer > div{
+        padding: 10px 10px;
+        float: left;
+    }
+
+    .totalcontainer{
+        -webkit-print-color-adjust: exact;
+        width:auto;
+        float:right;
+        border: 0px solid transparent !important;
+        border-collapse: collapse;
+    }
+
+    .logocontainer{
+        width: 100px;
+        height: 100x;
+        float: left;
+        margin: 0px 15px;
+    }
+
+    header > div{
+        float: left;
+    }
+
+    header > ul{
+        float: center;
+        text-align: right;
+    }
+
+    header > ul a1{
+        -webkit-print-color-adjust: exact;
+        color:red !important;
+        font-weight: bold;
+    }
+
+    header > ul b{
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    .headerborder{
+        -webkit-print-color-adjust: exact;
+        border-bottom: 2px dotted black !important;
+    }
+</style>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title> </title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<header class="headerborder">
+        <!-- <img src="karl.jpg" class="logocontainer"> -->
+        <div >
+                <br><b><%= comp.comp_name %></b> <br><br>
+                <%= comp.comp_address %><br>
+                <%=comp.comp_email%> <br>
+                <%= comp.comp_number %>
+        </div>
+        <ul>
+            <h3>Purchase Order</h3>
+            <br><br>
+            Order No.:          <a1><%= comp.ref_no%></a1> <br>
+            Date Generated: <%= comp.dgenerated%>      <br>
+            Acct Executive:     <b><%= `${comp.user_firstname} ${comp.user_lastname}` %></b>
+        </ul>
+</header>
+<body class="maincontainer">
+        <br><br>
+    <div class="detailcontainer">
+        <ul>
+            Client Name: <br>
+            Address:        <br>
+            Contact Number: <br>
+            Email Address:  <br>
+        </ul>
+       <div>
+           <%= `${comp.client_firstname} ${comp.client_lastname}` %>    <br>
+          <%= comp.client_address %> <br>
+           <%= comp.client_mobile %>               <br>
+           <%= comp.client_email %>   <br>
+       </div>
+    </div>
+<br><br>    
+<div>
+    In line with your requirements we are pleased to submit your Purchase Order:
+</div>
+<div>
+    <table class="tablecontainer">
+        <tr>
+            <th>ITEM NAME</th>
+            <th>DESCIPTION</th>
+            <th>UNIT PRICE</th>
+            <th>QTY</th>
+            <th>AMOUNT</th>
+            <%= data[0]%>
+        <tr>
+            <% for(var i=0; i < data.length; i++) { %>
+        <tr>
+            <td><%= data[i].product_name %></td>
+            <td><%= data[i].product_description %></td>
+            <td><%= data[i].item_subtotal / data[i].item_qty %></td>
+            <td><%= data[i].item_qty %></td>
+            <td><%= data[i].item_subtotal %></td>
+        <tr>
+            <% } %>
+    </table>
+    <br>
+    <div class="lowercontainer">
+                <div>
+                    Thank you for giving us an opportunity to provide you on your requirements.<br>
+                    Should you need additional information, please feel free to call us at <%= comp.comp_number%>
+                    or email us at <%= comp.comp_email%> <br>
+                </div>  
+                <table class="totalcontainer">
+                    <tr>
+                        <td>Sub Total:</td>
+                        <td><%= comp.order_amount%></td>
+                    </tr>
+                    <tr>
+                        <td>Delivery Charge:</td>
+                        <td><%= comp.order_delivery_charge%></td>
+                    </tr>
+                    <tr>
+                        <th>TOTAL:</th>
+                        <th><%= comp.order_amount + comp.order_delivery_charge %></th>
+                    </tr>
+                </table> 
+    </div>
+</div>
+</body>
+<html>

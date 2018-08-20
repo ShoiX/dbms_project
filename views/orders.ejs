@@ -71,7 +71,7 @@
 									<td>{{y.amt}}</td>
 									<td>{{y.agent}}</td>
 									<td><a href="" data-toggle="modal" data-target="#orderDetailsModal" ng-click="showOrderDetails(y.id, y.ref_id)">Details</a>&#160
-								<a href="">Export</a></td></td>
+								<a href="" ng-click="purchaseOrder(y.id)">Export</a></td></td>
 								</tr>
 							</tbody>
 						</table>	
@@ -207,6 +207,16 @@
 					alert(response.data);
 					$scope.getOrderDetails();
 				})
+			}
+
+			$scope.purchaseOrder = function(oid){
+				var callPrint = window.open('','print-window','height=400,width=600');
+				$http.get('/api/po/'+oid).then(function(response){
+					callPrint.document.write(response.data);
+					callPrint.document.close();
+					callPrint.focus();
+				});
+				
 			}
 		});
 	</script>

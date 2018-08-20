@@ -1,0 +1,102 @@
+<% include partials/header.ejs %>
+
+	<div class="fluid-container">
+		<div class="row border">
+			<span style="margin: 1%; margin-left: 3%;">
+				<button class="btn btn-primary" data-toggle="modal" data-target="#addUserModal">Add New User</button>		
+			</span>
+		</div>
+		<div class="row">
+			<div class="col-md-6" style="background-color: red">
+				asd
+			</div>
+			<div class="col-md-6" style="background-color: green">
+				asd
+			</div>
+		</div>
+	</div>
+	<!-- Modal for Adding User-->
+	<div class="modal fade addmodal" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">User Details</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+
+	         <form name="newUser" ng-submit="addUser()">
+			  <div class="form-group">
+			    <label for="user_uname">User Login Name:</label>
+			    <input type="text" class="form-control" name="user_uname" ng-maxlength="18" ng-minlength="4" ng-model="nuser.uname" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="user_pword">User Password:</label>
+			    <input type="password" class="form-control" name="user_pword" ng-maxlength="60" ng-minlength="4" ng-model="nuser.pword" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="user_conf">Confirm Password:</label>
+			    <input type="password" class="form-control" name="user_conf" ng-maxlength="25" ng-minlength="6" ng-model="nuser.conf" required/>
+			  </div>
+
+			  <div class="form-group">
+			    <label for="user_fname">User Firstname:</label>
+			    <input type="text" class="form-control" name="user_fname" ng-maxlength="60" ng-minlength="4" ng-model="nuser.fname" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="user_lname">User Lastname:</label>
+			    <input type="text" class="form-control" name="user_lname" ng-maxlength="60" ng-minlength="4" ng-model="nuser.lname" required/>
+			  </div>
+
+			  <div class="form-group">
+			    <label for="client_mobile">User Mobile Number:</label>
+			    <input type="text" class="form-control" name="user_mobile" ng-maxlength="20" ng-model="nuser.mobile" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="user_email">User Email:</label>
+			    <input type="email" class="form-control" name="user_email" ng-maxlength="60" ng-model="nuser.email" />
+			  </div>
+			  
+			  <button type="submit" class="btn btn-default" ng-disabled="newUser.$invalid">SAVE</button>
+			</form>
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('.addmodal').on('hidden.bs.modal', function(){
+		        $(this).find('form')[0].reset();
+		     });
+		});
+
+		var app = angular.module("myApp", []);
+
+		app.controller("myCtrl", function($scope, $http){
+			$scope.nuser = {};
+
+			$scope.addUser = function(){
+				console.log($scope.nuser);
+				var data = $scope.nuser;
+				if(data.pword != data.conf){
+					alert ("Passwords does not match");
+					return;
+				}
+				$http({
+				method: "POST",
+				url: "/api/post/add-user",
+				data: JSON.stringify({data: $scope.nuser}),
+				dataType: 'json',
+				contentType: 'application/json'
+			}).then(function(response){
+				alert(response.data);
+			});
+			}
+		});
+	</script>
+<% include partials/footer.ejs %>

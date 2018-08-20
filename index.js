@@ -11,6 +11,7 @@ var sha256 = require('sha256');
 var multer = require('multer');
 var crypto = require('crypto');
 var mime = require('mime');
+var ejs = require('ejs');
 
 
 /*config*/
@@ -89,11 +90,22 @@ app.get('/', function(req, res){
     	res.redirect('/login');
 });
 
+app.get('/dashboard', function(req, res){
+	res.render('dashboard', {activate: {dashboard: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+});
 app.get('/clients', function(req, res){
 	
 	//if (req.session.user)
 	if (req.session.user)
     	res.render('clients', {activate: {client: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+    else
+    	res.redirect('/login');
+});
+app.get('/settings', function(req, res){
+	
+	//if (req.session.user)
+	if (req.session.user)
+    	res.render('settings', {activate: {settings: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
     else
     	res.redirect('/login');
 });
@@ -255,6 +267,51 @@ app.get('/api/products', function(req, res){
 		res.end(JSON.stringify(json_data));
 
 	})
+});
+
+// purchase order
+app.get('/api/po/:id', function(req, res){
+	/*ejs.renderFile('views/POtemplate.ejs', {}, 'utf-8', function(err, contents){
+		console.log(contents);
+		res.send(contents);
+	});*/
+
+	var cid = req.params.id;
+	// get company details first 
+	con.query(`SELECT tblusers.user_firstname,
+		 tblusers.user_lastname,
+		 tblclients.client_firstname,
+		 tblclients.client_lastname,
+		 tblclients.client_mobile,
+		 tblclients.client_address,
+		 tblclients.client_email,
+		 tblsettings.*,
+		 order_delivery_charge,
+		 order_amount,
+		 order_date
+		 FROM tblorders 
+		 INNER JOIN tblusers ON order_user_id = tblusers.user_id 
+		 INNER JOIN tblclients ON order_client_id = tblclients.client_id
+		 INNER JOIN tblsettings WHERE order_id = ${cid} LIMIT 1`, function(err, rows){
+		 	if (err)
+		 		throw err;
+		 	rows[0].ref_no = utils.encode_Id(cid,rows[0].order_date);
+		 	rows[0].dgenerated = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format2);
+		 	
+
+		 	//get each ordered item
+		 	con.query(`SELECT 
+				tblproducts.product_name, 
+				tblproducts.product_description, 
+				item_qty, item_subtotal 
+				FROM tblorder_items
+				INNER JOIN tblproducts ON item_product_id = tblproducts.product_id 
+				WHERE item_order_id = ${cid}`, function(er, rs){
+					
+					res.render('POtemplate', {comp: rows[0], data: rs});
+				});
+		 })
+	
 });
 
 //  list of orders
@@ -640,6 +697,49 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  			res.send("Order Succesfully "+setter[type][1]);
  	});
  	
+ });
+
+
+ // add new user who can login
+ app.post('/api/post/add-user', jsonParser, function(req, res){
+ 	// user must be logged in..
+ 	/*if (!req.session.user){
+ 		res.end("Error");
+ 		return;
+ 	}*/
+ 	var data = req.body.data;
+
+ 	// check if username already exists
+ 	con.query(`SELECT user_id FROM tblusers
+ 		WHERE user_loginname = ${con.escape(data.uname)}`, function(err, rows){
+ 			if (err)
+ 				throw err;
+ 			if (rows.length > 0)
+ 				res.end("Username alredy exists");
+ 			else{
+ 				var sql = `INSERT INTO tblusers
+ 					(user_firstname,
+ 					user_lastname,
+ 					user_number,
+ 					user_email,
+ 					user_loginname,
+ 					user_password)
+ 					VALUES
+ 					(${con.escape(data.fname)},
+ 					${con.escape(data.lname)},
+ 					${con.escape(data.mobile)},
+ 					${con.escape(data.email)},
+ 						${con.escape(data.uname)},
+ 					${con.escape(sha256(data.pword))})`;
+ 					console.log(sql);
+ 				con.query(sql, function(er){
+ 						if (er)
+ 							throw er;
+ 						res.end("User successfully added");
+ 					});
+ 			}
+ 		});
+
  });
  app.get('/logout', function(req, res){
  	req.session.destroy(function(err){
