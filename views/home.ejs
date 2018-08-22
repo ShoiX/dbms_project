@@ -14,6 +14,15 @@
 				</div>
 			</div>
 			<div class="col col-md-10  border" style="">
+				<div class="row">
+					<span class="" style="margin:1%;">
+						<i class="fa fa-home fa-2x" style="color: green;" aria-hidden="true"></i> &#160
+						<span id="currentsize">400</span>
+						/
+						<span id="storagesize">1000</span> 
+						<span id="currentpercent"></span>
+					</span>
+				</div>
 				<div style="height: 470px; width: 100%; overflow-y: auto; overflow-x: hidden;">
 				<table class="table table-hover table-striped" style="margin-left: 2%; margin-right: 3%;">
 					<thead> 
@@ -359,6 +368,8 @@
 			});
 			$scope.active = {};
 			$scope.active[line_name] = 'active';
+			$scope.getStorageStat();
+
 		}
 
 		$scope.addProdLine = function(){
@@ -403,6 +414,19 @@
 			});
 		};
 
+		// get storage status
+		$scope.getStorageStat = function(){
+			$http.get('/api/storage-status').then(function(res){
+				var storage = res.data;
+				storage.percent = Number((storage.qty / storage.size) * 100).toFixed(2);
+				console.log(storage);
+
+				$('#currentsize').html(storage.qty);
+				$('#storagesize').html(storage.size);
+				$('#currentpercent').html(`(${storage.percent}%)`);
+
+			})
+		}
 		// submit edit
 		$scope.editProd = function(){
 			if (!confirm("Save Changes?"))

@@ -11,7 +11,7 @@ var sha256 = require('sha256');
 var multer = require('multer');
 var crypto = require('crypto');
 var mime = require('mime');
-var ejs = require('ejs');
+var ejs =  require('ejs');
 
 
 /*config*/
@@ -135,6 +135,16 @@ app.get('/api/client-select', function(req, res){
 	});
 });
 
+// get storage status
+app.get('/api/storage-status', (req, res)=>{
+	con.query('SELECT comp_warehouse_size, SUM(tblproducts.product_qty)AS numa FROM tblsettings INNER JOIN tblproducts WHERE tblproducts.product_status = 1 GROUP BY comp_warehouse_size ', function(err, row){
+		if (err)
+			throw err;
+		res.json({size: row[0].comp_warehouse_size,
+			qty: row[0].numa})
+	})
+})
+
 // list of clients for clients tab
 app.get('/api/clients', function(req,res){
 	res.writeHead(200, {'Content-type': 'application/json'});
@@ -153,6 +163,21 @@ app.get('/api/clients', function(req,res){
 		});
 		
 			res.end(JSON.stringify(json_data));
+	});
+});
+
+// get all company info
+app.get('/api/get-info', function(req, res){
+	con.query('SELECT * FROM tblsettings LIMIT 1', function(err, rows){
+		var row = rows[0];
+		var out = {
+			name: row.comp_name,
+			addr: row.comp_address,
+			mobile: row.comp_number,
+			email: row.comp_email,
+			size: row.comp_warehouse_size
+		};
+		res.json(out);
 	});
 });
 
@@ -387,7 +412,23 @@ app.get("/api/order-summary/:id", function(req, res){
 })
 
 /* POST routes */
+// update Company Profile
+app.post('/api/post/update-settings', jsonParser, function(req, res){
+	console.log(req.body);
+	var input = req.body.data;
+	con.query(`UPDATE tblsettings 
+		SET comp_name = ${con.escape(input.name)},
+		comp_address =${con.escape(input.addr)},
+		comp_number = ${con.escape(input.mobile)},
+		comp_email = ${con.escape(input.email)},
+		comp_warehouse_size = ${con.escape(input.size)}`, function(err){
+		 	if (err)
+				throw err;
+			res.end("Success");
+		});
+});
 
+ 
 // delete a client
 app.post("/api/post/del-client", jsonParser, function(req, res){
 	var cl_id = req.body.client_id;
