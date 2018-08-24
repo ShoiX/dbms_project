@@ -55,7 +55,7 @@
 		<div class="row">
 			<div style="margin-left: 2%; margin-top: 2%;">
 				<div style="float: left;">
-					<button  data-toggle="modal" data-target="#addProductModal">Add New {{selected_line_name}}</button>
+					<button  data-toggle="modal" data-target="#addProductModal" ng-disabled="!selected_line_name">Add New {{selected_line_name}}</button>
 					<button data-toggle="modal" data-target="#orderProdModal" ng-disabled="n < 1" ng-click="addOrders();">Order selected</button>
 				</div>
 			</div>
