@@ -142,7 +142,7 @@
 			  </div>
 			  <div class="form-group">
 			    <label for="product_desc">Product Description:</label>
-			    <textarea class="form-control" rows="3"  name="product_desc" ng-model="nprod.desc" ng-minlength="8" ng-maxlength="200" required></textarea>
+			    <textarea class="form-control" rows="3"  name="product_desc" ng-model="nprod.desc" ng-minlength="4" min="4" ng-maxlength="200" required></textarea>
 			  </div>
 			  
 			  <div class="form-group">
@@ -188,7 +188,7 @@
 			  </div>
 			  <div class="form-group">
 			    <label for="product_desc">Product Description:</label>
-			    <textarea class="form-control" rows="3"  name="product_desc" ng-model="editprod.desc" ng-minlength="8" ng-maxlength="200" required></textarea>
+			    <textarea class="form-control" rows="3"  name="product_desc" ng-model="editprod.desc" ng-minlength="4" min="4" ng-maxlength="200" required></textarea>
 			  </div>
 			  
 			  <div class="form-group">
@@ -421,7 +421,7 @@
 			$http.get('/api/storage-status').then(function(res){
 				var storage = res.data;
 				storage.percent = Number((storage.qty / storage.size) * 100).toFixed(2);
-				console.log(storage);
+				
 
 				$('#currentsize').html(storage.qty);
 				$('#storagesize').html(storage.size);
@@ -429,6 +429,7 @@
 
 			})
 		}
+		$scope.getStorageStat();
 		// submit edit
 		$scope.editProd = function(){
 			if (!confirm("Save Changes?"))

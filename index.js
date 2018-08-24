@@ -147,11 +147,14 @@ app.get('/api/client-select', function(req, res){
 
 // get storage status
 app.get('/api/storage-status', (req, res)=>{
-	con.query('SELECT comp_warehouse_size, SUM(tblproducts.product_qty)AS numa FROM tblsettings INNER JOIN tblproducts WHERE tblproducts.product_status = 1 GROUP BY comp_warehouse_size ', function(err, row){
+	con.query(`SELECT COALESCE(SUM(product_qty), 0) AS numa from tblproducts WHERE product_status = 1;
+		SELECT comp_warehouse_size from tblsettings;`, function(err, row){
+			console.log(row[0][0].numa);
+			console.log(row[1][0].comp_warehouse_size);
 		if (err)
 			throw err;
-		res.json({size: row[0].comp_warehouse_size,
-			qty: row[0].numa})
+		res.json({size: row[1][0].comp_warehouse_size,
+			qty: row[0][0].numa});
 	})
 })
 
