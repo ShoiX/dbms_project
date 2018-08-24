@@ -1,0 +1,16 @@
+<% include partials/header.ejs %>
+	<div class="fluid-container">
+	</div>
+	<script type="text/javascript">
+	$(document).ready(function() {
+		$('.addmodal').on('hidden.bs.modal', function(){
+	        $(this).find('form')[0].reset();
+	     });
+	});
+	var app = angular.module("myApp", []);
+
+	app.controller("myCtrl", function($scope, $http){
+
+	});
+	</script>
+<% include partials/footer.ejs %>

@@ -101,6 +101,16 @@ app.get('/clients', function(req, res){
     else
     	res.redirect('/login');
 });
+
+// supply page
+app.get('/supply', function(req, res){
+	//if (req.session.user)
+	if (req.session.user)
+    	res.render('supply', {activate: {supply: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+    else
+    	res.redirect('/login');
+});
+
 app.get('/settings', function(req, res){
 	
 	//if (req.session.user)

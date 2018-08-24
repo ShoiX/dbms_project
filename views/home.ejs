@@ -336,6 +336,8 @@
 		// get product lines
 		$scope.getProductLines = function(){
 			$http.get("/api/product-lines").then(function(response){
+				if (response.data.length == 0)
+					return;
 				$scope.res = response.data;
 				$scope.selected_line = $scope.res[0]['id'];
 
