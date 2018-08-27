@@ -169,7 +169,7 @@
 	  </div>
 	</div>
 
-	<!-- MODAL FOR ORDERING -->
+	<!-- MODAL FOR ADDING SUPPLIER -->
 	<div class="modal fade addmodal" id="addDistModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
 	  <div class="modal-dialog" role="document">
 	    <div class="modal-content">
@@ -184,20 +184,20 @@
 	         <form name="newSupplier" ng-submit="addSupp()">
 			  <div class="form-group">
 			    <label for="">Company Name:</label>
-			    <input type="text" class="form-control" name="" maxlength="20" minlength="4" ng-model="supp.name" required/>
+			    <input type="text" class="form-control" name="" maxlength="100" minlength="4" ng-model="supp.name" required/>
 			  </div>
 			  <div class="form-group">
 			    <label for="">Contact Person:</label>
-			    <input type="text" class="form-control" name="" maxlength="60" minlength="4" ng-model="supp.person" required/>
+			    <input type="text" class="form-control" name="" maxlength="130" minlength="4" ng-model="supp.person" required/>
 			  </div>
 			  <div class="form-group">
 			    <label for="user_conf">Company Address:</label>
-			    <input type="text" class="form-control" name="" maxlength="40" minlength="6" ng-model="supp.addr" required/>
+			    <input type="text" class="form-control" name="" maxlength="190" minlength="6" ng-model="supp.addr" required/>
 			  </div>
 
 			  <div class="form-group">
 			    <label for="">Company email:</label>
-			    <input type="email" class="form-control" name="" maxlength="60" minlength="4" ng-model="supp.email" required/><td>{{y.so_id}}</td>
+			    <input type="email" class="form-control" name="" maxlength="140" minlength="4" ng-model="supp.email" required/><td>{{y.so_id}}</td>
 			  </div>
 			  <div class="form-group">
 			    <label for="">Company Contact Number:</label>
