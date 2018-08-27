@@ -12,10 +12,16 @@ var multer = require('multer');
 var crypto = require('crypto');
 var mime = require('mime');
 var ejs =  require('ejs');
+var pdf = require('html-pdf');
 
+ /*MAILER OBJECT*/
+ var mailer = require('./include/mail.js');
 
 /*config*/
 var con = require('./include/connection');	//db connection
+
+//pdf options
+var pdfOptions = { format: 'Letter' }; 
 
 var constants = require('./include/constants');
 
@@ -102,6 +108,28 @@ app.get('/clients', function(req, res){
     	res.redirect('/login');
 });
 
+// get all supplier products
+app.get('/api/supplier-prod/:sid', function(req, res){
+	var id = req.params.sid;
+	console.log(id);
+	con.query(`SELECT product_name, product_qty, product_id
+	FROM tblproducts
+	INNER JOIN tblproductlines ON product_line_id = tblproductlines.line_id
+	INNER JOIN tblsupplier ON tblproductlines.line_supplier_id = tblsupplier.supplier_id
+	WHERE tblsupplier.supplier_id = ${id}`, function(err, rows){
+		var out = [];
+		rows.forEach(item=>{
+			out.push({
+				name: item.product_name,
+				stock: item.product_qty,
+				id: item.product_id,
+				orderQty: 0
+			});
+		});
+		res.json(out);
+	});
+});
+
 // supply page
 app.get('/supply', function(req, res){
 	//if (req.session.user)
@@ -149,8 +177,7 @@ app.get('/api/client-select', function(req, res){
 app.get('/api/storage-status', (req, res)=>{
 	con.query(`SELECT COALESCE(SUM(product_qty), 0) AS numa from tblproducts WHERE product_status = 1;
 		SELECT comp_warehouse_size from tblsettings;`, function(err, row){
-			console.log(row[0][0].numa);
-			console.log(row[1][0].comp_warehouse_size);
+			
 		if (err)
 			throw err;
 		res.json({size: row[1][0].comp_warehouse_size,
@@ -266,12 +293,14 @@ app.get('/api/client-details/:id', function(req, res){
 
 // get all product-lines
 app.get('/api/product-lines', function(req, res){
-	con.query('SELECT * FROM `tblproductlines` WHERE line_status = 1 ORDER BY `line_id` ASC', function(err, rows){
+	con.query('SELECT *, tblsupplier.supplier_name, tblsupplier.supplier_id FROM `tblproductlines` INNER JOIN tblsupplier ON line_supplier_id = tblsupplier.supplier_id WHERE line_status = 1 ORDER BY `line_id` ASC', function(err, rows){
     	if (err)
     		throw err;
     	var json_data = [];
     	rows.forEach(items => {
-    		json_data.push({id: items.line_id, name: items.line_name})
+    		json_data.push({id: items.line_id, name: items.line_name,
+    			supp_id: items.line_supplier_id,
+    			supp_name: items.supplier_name})
     	});
     	
     	res.writeHead(200, {'Content-type': 'application/json'});
@@ -422,12 +451,77 @@ app.get("/api/order-summary/:id", function(req, res){
 			});
 			res.end(JSON.stringify(out));
 		})
-})
+});
+
+// get supply order details
+app.get('/api/so-detail/:id', function(req, res){
+	var sid = req.params.id;
+	con.query(`SELECT 
+		oi_product_id,
+		oi_qty,
+		tblproducts.product_name,
+		tblproducts.product_qty
+		FROM tblsupply_order_items
+		INNER JOIN tblproducts ON oi_product_id = tblproducts.product_id
+		WHERE oi_so_id = ${sid}`, function(err, rows){
+			res.json(rows);
+		});
+	});
+
+// get all supply orders
+app.get('/api/supply-order', function(req, res){
+	var out = {
+		pending: [],
+		received: []
+	};
+
+	// get pending orders
+	con.query(`SELECT
+		so_id,
+		so_date,
+        so_status,
+        so_date,
+        so_date_received AS date_received,
+		tblsupplier.supplier_name,
+		tblusers.user_firstname,
+		tblusers.user_lastname
+        FROM tblsupply_order
+		INNER JOIN tblusers ON so_orderby_id = tblusers.user_id
+		INNER JOIN tblsupplier ON so_supplier_id = tblsupplier.supplier_id
+		ORDER BY so_date_received DESC, so_date DESC`, function(err, rows){
+			if (err)
+				throw err;
+			rows.forEach(row =>{
+				// format date 
+				row.so_date = moment(new Date(row.so_date)).format("MMMM D, YYYY");
+				
+				// approved
+				if (row.so_status){
+					// format date received
+					row.so_date_received = moment(new Date(row.date_received)).format("MMMM D, YYYY");
+					out.received.push(row);
+				}
+
+				else{
+					out.pending.push(row);
+				}
+			});
+			res.json(out);
+		});
+	
+});
+
+app.get('/api/suppliers', function(req, res){
+	con.query(`SELECT * FROM tblsupplier WHERE supplier_status = 1`, function(err, row){
+		res.json(row);
+	})
+});
+
 
 /* POST routes */
 // update Company Profile
 app.post('/api/post/update-settings', jsonParser, function(req, res){
-	console.log(req.body);
+	
 	var input = req.body.data;
 	con.query(`UPDATE tblsettings 
 		SET comp_name = ${con.escape(input.name)},
@@ -462,11 +556,11 @@ app.post("/api/post/add-prod-line", jsonParser, function(req, res){
 	// check if item already exist
 	con.query("SELECT line_id FROM tblproductlines WHERE line_status = 1 AND line_name = " + name, function(err, rows){
 		if (rows.length > 0){
-			res.end("Product-line Already Exists");
+			res.end("Product-line  Already Exists");
 		}
 		else
-		{
-			con.query("INSERT INTO tblproductlines (line_name) VALUES ("+name+")", function(err2, rows2){
+		{ 
+			con.query("INSERT INTO tblproductlines (line_name, line_supplier_id) VALUES ("+name+", "+req.body.supplier_id +")", function(err2, rows2){
 				if (err2){
 					throw err2;
 				}
@@ -481,6 +575,7 @@ app.post("/api/post/add-prod-line", jsonParser, function(req, res){
 
 // editing of product-line
 app.post("/api/post/edit-prod-line", jsonParser, function(req, res){
+	var esid = req.body.sid;
 	var eid = req.body.id;
 	var ename = con.escape(req.body.name);
 	// check if there is an existing name
@@ -494,7 +589,7 @@ app.post("/api/post/edit-prod-line", jsonParser, function(req, res){
 			}
 			// update
 			else{
-				con.query(`UPDATE tblproductlines SET line_name = ${ename}
+				con.query(`UPDATE tblproductlines SET line_name = ${ename}, line_supplier_id = ${esid}
 					WHERE line_id = ${eid}`, function(er){
 						if (er)
 							throw er;
@@ -604,8 +699,81 @@ app.post("/api/post/edit-prod", jsonParser, upload.single('prod_logo'), function
 		}
 	})
 	
+}); 
+
+// adding of new supplier order
+app.post('/api/post/add-supp-order', jsonParser, function(req, res){
+	if (!req.session.user){
+		res.end("Error!");
+		return;
+	}
+	var orderby = req.session.user.user_id;
+	var so = req.body.data;
+	var date_now = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format);
+
+
+	// insert parent
+	con.query(`INSERT INTO tblsupply_order (
+		so_supplier_id,
+		so_date,
+		so_orderby_id
+		) VALUES(
+		${so.sid},
+		'${date_now}',
+		${orderby}
+		)`, function(err, result){
+			if (err)
+				throw err;
+			// insert children
+			var so_id = result.insertId;
+			so.items.forEach(item=>{
+				con.query(`INSERT INTO tblsupply_order_items (
+					oi_so_id,
+					oi_product_id,
+					oi_qty
+					)
+					VALUES (
+					${so_id},
+					${item.pid},
+					${item.qty}
+					)`, function(er){
+						if (er)
+							throw er;
+					});
+			});
+			res.end("Success");
+
+		});
 });
 
+// receiving of supply order
+app.post('/api/post/receive-supp-order', jsonParser, function(req, res){
+	var q = req.body.data;
+	var items = q.items
+	var date_now = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format);
+
+	// update parent
+	con.query(`UPDATE tblsupply_order 
+		SET so_status = 1,
+		so_date_received = '${date_now}'
+		WHERE so_id = ${q.oid}`, function(err){
+			if (err)
+				throw err;
+			// update children and add product_qty
+			items.forEach(item =>{
+				var date_now = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format);
+				con.query(`UPDATE tblsupply_order_items SET oi_qty = ${item.oi_qty}
+					WHERE oi_product_id = ${item.oi_product_id} AND oi_so_id = ${q.oid};
+					UPDATE tblproducts
+					SET product_qty = (product_qty + ${item.oi_qty})
+					WHERE product_id = ${item.oi_product_id}`, function(er){
+						if (er)
+							throw er;
+					});
+			});
+			res.end("Success");
+		});
+});
 
 // adding of new product-line
 app.post("/api/post/add-order", jsonParser, function(req, res){
@@ -725,6 +893,7 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  app.post('/api/post/approve-order', jsonParser, function(req, res){
  	var oid = req.body.id;
  	var type = req.body.type;
+ 	var client_email;
  	var setter = {
  		approve: [constants.ORDER.APPROVE, 'Approved'],
  		drop: [constants.ORDER.DROP, 'Dropped']
@@ -747,8 +916,72 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
 	 			res.send("Order Succesfully "+setter[type][1]);
 	 		});
 	 	}
- 		else
- 			res.send("Order Succesfully "+setter[type][1]);
+ 		else{
+ 			res.end("Order Succesfully "+setter[type][1]);
+
+ 			
+ 			 /*generate Purchase Order*/
+ 			 // get company details first 
+			con.query(`SELECT tblusers.user_firstname,
+				 tblusers.user_lastname,
+				 tblclients.client_firstname,
+				 tblclients.client_lastname,
+				 tblclients.client_mobile,
+				 tblclients.client_address,
+				 tblclients.client_email,
+				 tblsettings.*,
+				 order_delivery_charge,
+				 order_amount,
+				 order_date
+				 FROM tblorders 
+				 INNER JOIN tblusers ON order_user_id = tblusers.user_id 
+				 INNER JOIN tblclients ON order_client_id = tblclients.client_id
+				 INNER JOIN tblsettings WHERE order_id = ${oid} LIMIT 1`, function(err, rows){
+				 	client_email = rows[0].client_email;
+				 	
+				 	if (!client_email){
+				 		console.log("client has no email");
+				 		return;
+				 	}
+				 	if (err)
+				 		throw err;
+				 	rows[0].ref_no = utils.encode_Id(oid,rows[0].order_date);
+				 	rows[0].dgenerated = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format2);
+				 	
+
+				 	//get each ordered item
+				 	con.query(`SELECT 
+						tblproducts.product_name, 
+						tblproducts.product_description, 
+						item_qty, item_subtotal 
+						FROM tblorder_items
+						INNER JOIN tblproducts ON item_product_id = tblproducts.product_id 
+						WHERE item_order_id = ${oid}`, function(er, rs){
+							
+							ejs.renderFile('./views/POtemplate.ejs', {comp: rows[0], data: rs}, {}, function(err, str){
+								pdf.create(str, pdfOptions).toFile('./pdf_store/PO.pdf', function(err, res) {
+								  
+								  // send Mail
+								  mailer.options.subject = "Purchase Order";
+								  mailer.options.html = `<p> Your Order has been accepted
+								  <br>
+								  <br>
+								  Attached here is your Purchase Order.
+								  <br>
+								  If you have other concerns, Please contact us immediately</p>`;
+								  mailer.options.attachments = [{
+								  	filename: 'Purchase Order.pdf',
+								  	path:'./pdf_store/PO.pdf'
+								  }];
+								  mailer.options.to = client_email;
+								  mailer.sendMail(function(err, info){
+								  	console.log(info);
+								  })
+								});
+							});
+						});
+				 });
+ 		}
  	});
  	
  });
@@ -785,7 +1018,7 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  					${con.escape(data.email)},
  						${con.escape(data.uname)},
  					${con.escape(sha256(data.pword))})`;
- 					console.log(sql);
+ 					
  				con.query(sql, function(er){
  						if (er)
  							throw er;
@@ -795,6 +1028,40 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  		});
 
  });
+
+ // add new supplier to the database
+ app.post('/api/post/add-supplier', jsonParser, function(req, res){
+ 	var data = req.body.data;
+ 	
+ 	// check if name already exists
+ 	con.query(`SELECT supplier_id from tblsupplier WHERE supplier_name = ${con.escape(data.name)}`, function(er, row){
+ 		if (row.length > 0){
+ 			res.end("Supplier already exists");
+ 		}
+ 		else{
+ 			// add supplier to the database
+ 			var sql = `INSERT INTO tblsupplier (
+ 				supplier_name,
+ 				supplier_email,
+ 				supplier_number,
+ 				supplier_contact,
+ 				supplier_address
+ 				) VALUES(
+ 				${con.escape(data.name)},
+ 				${con.escape(data.email)},
+ 				${con.escape(data.number)},
+ 				${con.escape(data.person)},
+ 				${con.escape(data.addr)}
+ 				)`;
+ 				console.log(sql);	
+ 			con.query(sql, function(err){
+ 					if (err)
+ 						throw err;
+ 					res.end("Success");
+ 				})
+ 		}
+	})
+});
  app.get('/logout', function(req, res){
  	req.session.destroy(function(err){
  		res.redirect('/');

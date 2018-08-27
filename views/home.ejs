@@ -1,6 +1,6 @@
 <% include partials/header.ejs %>
 	<div class="fluid-container">
-
+		
 		<div class="row" style="">
 			<div class="col col-md-2  border" style="">
 				<div style="margin: 3%;">
@@ -9,7 +9,7 @@
 				</div>
 				<div class="form-group" style="height: 470px; overflow-y: auto;">
 					<ul class="list-group">
-						<li ng-repeat="x in res" value="{{x.id}}" ng-click="getProducts(x.id, x.name);" class="line-list list-group-item {{active[x.name]}}">{{x.name}} &#160 <i class="fa fa-edit" ng-click="editLineName(x.id, x.name)" data-toggle="modal" data-target="#editLineModal"></i></li>	
+						<li ng-repeat="x in res" value="{{x.id}}" ng-click="getProducts(x.id, x.name);" class="line-list list-group-item {{active[x.name]}}">{{x.name}} &#160 <i class="fa fa-edit" ng-click="editLineName(x.id, x.name, x.supp_id, x.supp_name)" data-toggle="modal" data-target="#editLineModal"></i></li>	
 					</ul>
 				</div>
 			</div>
@@ -24,13 +24,13 @@
 					</span>
 				</div>
 				<div style="height: 470px; width: 100%; overflow-y: auto; overflow-x: hidden;">
-				<table class="table table-hover table-striped" style="margin-left: 2%; margin-right: 3%;">
+				<table class="table table-hover table-striped" style="margin-left: 2%; margin-right: 2%;">
 					<thead> 
 					 	<tr>
 					 		<th></th>
 							<th>ID</th>
 							<th>Product Name</th>
-							<th style="min-width: 30%;">Description</th>
+							<th>Description</th>
 							<th>Price</th>
 							<th>Quantity</th>
 							<th>Actions</th>
@@ -40,9 +40,9 @@
 						<tr ng-repeat="x in product_data">
 							<td><input type="checkbox" ng-model="checked[x.prod_id.toString()][0]" ng-click="toggleProd(x.prod_id, x.name, x.price, x.qty)"></td>
 							<td>{{x.prod_id}}</td>
-							<td><a href="" data-toggle="modal" data-target="#prodSummaryModal" ng-click="getProdSummary(x.prod_id)">{{x.name}}</a></td>
-							<td>{{x.desc}}</td>
-							<td>{{x.price}}</td>
+							<td style="width: 20%; max-width: 20%;"><a href="" data-toggle="modal" data-target="#prodSummaryModal" ng-click="getProdSummary(x.prod_id)">{{x.name}}</a></td>
+							<td style="width: 30%; max-width: 30%;">{{x.desc}}</td>
+							<td >{{x.price}}</td>
 							<td>{{x.qty}}</td>
 							<td><a href="" ng-click="showEditProd(x)" data-toggle="modal" data-target="#editProdModal">Edit</a> &#160
 								<a href="" ng-click="delLine(x.prod_id)"> Delete</a></td>
@@ -77,6 +77,12 @@
 
 	         <form name="addProdForm" ng-submit="addProdLine()">
 			  <div class="form-group">
+			    <label for="">Supplier:</label>
+			    <select ng-model="prod.addSuppId" required>
+			    	<option ng-repeat="q in supplier" value="{{q.id}}">{{q.name}}</option>
+			    </select>
+			  </div>
+			  <div class="form-group">
 			    <label for="prod_name">Product Line Name:</label>
 			    <input type="text" class="form-control" name="prod_name" ng-minlength="3" ng-model="prod.addName" required/>
 			  </div>
@@ -101,7 +107,12 @@
 	        </button>
 	      </div>
 	      <div class="modal-body">
-
+	      	<div class="form-group">
+			    <label for="">Supplier:</label>
+			    <select ng-model="eprod.editSupp" id="editSuppID"  ng-options="option.name for option in supplier track by option.id" required>
+			    	 
+			    </select>
+			  </div>
 	         <form name="editProdForm" ng-submit="submitEditLine()">
 			  <div class="form-group">
 			    <label for="prod_name">Product Line Name:</label>
@@ -333,6 +344,8 @@
 		$scope.clients = [];
 		$scope.eprod = {};
 		$scope.editprod = {};
+		$scope.supplier = [];
+
 		// get product lines
 		$scope.getProductLines = function(){
 			$http.get("/api/product-lines").then(function(response){
@@ -342,6 +355,7 @@
 				$scope.selected_line = $scope.res[0]['id'];
 
 				$scope.getProducts($scope.selected_line, $scope.res[0]['name']);
+				
 			});
 		};
 		$scope.getClients = function(){
@@ -379,7 +393,8 @@
 			$http({
 				method: "POST",
 				url: "/api/post/add-prod-line",
-				data: JSON.stringify({name: $scope.prod.addName}),
+				data: JSON.stringify({name: $scope.prod.addName,
+					supplier_id: $scope.prod.addSuppId}),
 				dataType: 'json',
 				contentType: 'application/json'
 			})
@@ -527,19 +542,21 @@
 			});
 		}
 
-		$scope.editLineName = function(id, lname){
+		$scope.editLineName = function(id, lname, supp_id, supp_name){
+			
 			$scope.eprod.editName = lname;
 			$scope.eprod.editId = id;
-			
+			$scope.eprod.editSupp = {id: supp_id, name: supp_name};
 		}
 		$scope.submitEditLine = function(){
-			
+			console.log($scope.eprod.editSupp);
 			$http({
 				method: "POST",
 				url: "/api/post/edit-prod-line",
 				data: JSON.stringify({
 					id: $scope.eprod.editId, 
-					name: $scope.eprod.editName}),
+					name: $scope.eprod.editName,
+					sid: $scope.eprod.editSupp.id}),
 				dataType: 'json',
 				contentType: 'application/json'
 			})
@@ -575,6 +592,20 @@
 			document.getElementById('prod_logo_edit').src = "/lib/img/products/"+$scope.editprod.logo;
 
 		}
+
+		$scope.getSuppliers = function(){
+			$http.get('api/suppliers').then(function(res){
+				data = res.data;
+				data.forEach(item=>{
+					$scope.supplier.push({
+						id: item.supplier_id,
+						name: item.supplier_name
+					})
+				});
+			});
+			console.log($scope.supplier);
+		}
+		$scope.getSuppliers();
 	}).filter('sumOrders', function(){
 		return function(order_data){
 			if(angular.equals(order_data, {})){

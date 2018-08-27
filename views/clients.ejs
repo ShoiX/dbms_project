@@ -9,7 +9,7 @@
 		
 		<div class="row">
 			<div class="col-md-12">
-				<div style="height: 450px;">
+				<div style="height: 450px; overflow-y: auto;">
 					<table class="table table-hover table-striped">
 						<thead>
 							<tr>
@@ -115,27 +115,27 @@
 	         <form name="newClient" ng-submit="addClient()">
 			  <div class="form-group">
 			    <label for="client_fname">Client Firstname:</label>
-			    <input type="text" class="form-control" name="client_fname" ng-maxlength="60" ng-minlength="4" ng-model="nclient.fname" required/>
+			    <input type="text" class="form-control" name="client_fname" maxlength="50" minlength="4" ng-model="nclient.fname" required/>
 			  </div>
 			  <div class="form-group">
 			    <label for="client_lname">Client Lastname:</label>
-			    <input type="text" class="form-control" name="client_lname" ng-maxlength="60" ng-minlength="4" ng-model="nclient.lname" required/>
+			    <input type="text" class="form-control" name="client_lname" maxlength="50" minlength="4" ng-model="nclient.lname" required/>
 			  </div>
 			  <div class="form-group">
 			    <label for="client_mobile">Client Address:</label>
-			    <input type="text" class="form-control" name="client_addr" ng-maxlength="100" ng-minlength="5" ng-model="nclient.addr" required/>
+			    <input type="text" class="form-control" name="client_addr" maxlength="100" minlength="4" ng-model="nclient.addr" required/>
 			  </div>
 
 			  <div class="form-group">
 			    <label for="client_mobile">Client Mobile Number:</label>
-			    <input type="text" class="form-control" name="client_mobile" ng-maxlength="20" ng-model="nclient.mobile" required/>
+			    <input type="text" class="form-control" name="client_mobile" maxlength="20" minlength="6" ng-model="nclient.mobile" required/>
 			  </div>
 			  <div class="form-group">
 			    <label for="client_email">Client Mobile Email:</label>
-			    <input type="email" class="form-control" name="client_email" ng-maxlength="60" ng-model="nclient.email" />
+			    <input type="email" class="form-control" name="client_email" ng-model="nclient.email" />
 			  </div>
 			  
-			  <button type="submit" class="btn btn-default" ng-disabled="newClient.$invalid">SAVE</button>
+			  <button type="submit" class="btn btn-default" >SAVE</button>
 			</form>
 	      </div>
 	      <div class="modal-footer">

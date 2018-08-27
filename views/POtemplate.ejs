@@ -143,8 +143,8 @@
         <tr>
             <% for(var i=0; i < data.length; i++) { %>
         <tr>
-            <td><%= data[i].product_name %></td>
-            <td><%= data[i].product_description %></td>
+            <td style="width: 130px; max-width: 130px;"><%= data[i].product_name %></td>
+            <td style="width: 150px; max-width: 150px;"><%= data[i].product_description %></td>
             <td><%= data[i].item_subtotal / data[i].item_qty %></td>
             <td><%= data[i].item_qty %></td>
             <td><%= data[i].item_subtotal %></td>

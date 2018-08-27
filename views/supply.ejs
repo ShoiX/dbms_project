@@ -1,6 +1,309 @@
 <% include partials/header.ejs %>
 	<div class="fluid-container">
+		<div class="row">
+			<span style="margin: 1%; margin-left: 3%;">
+				<button class="btn btn-primary" data-toggle="modal" data-target="#addDistModal">Add New Supplier</button>		
+			</span>
+			<span class="" style="margin:1%;">
+				<i class="fa fa-home fa-2x" style="color: green;" aria-hidden="true"></i> &#160
+				<span id="currentsize">400</span>
+				/
+				<span id="storagesize">1000</span> 
+				<span id="currentpercent"></span>
+			</span>
+		</div>
+
+		<div class="row border">
+			<ul class="nav nav-tabs" style="margin-left: 2%;">
+				<li class="nav-item"><a data-toggle="tab" href="#supplierTab" class="nav-link active">Suppliers</a></li>
+				<li class="nav-item"><a data-toggle="tab" href="#aqcuisitionTab" class="nav-link">Acquisition</a></li>
+				<li class="nav-item"><a data-toggle="tab" href="#aqcuisitionHistoryTab" class="nav-link">Acquisition History</a></li>
+			</ul>	
+		</div>
+
+		<div class="row">
+			<div class="col-md-12">
+				<div style="height: 450px; overflow-y: auto;">
+					<div class="tab-content">
+						<div id="supplierTab" class="tab-pane fade show active">
+							<table class="table table-hover table-striped">
+								<thead>
+									<tr>
+										<th></th>
+										<th>Supplier ID</th>
+										<th>Name</th>
+										<th>Email</th>
+										<th>Contact Number</th>
+										<th>Address</th>
+										<th>Contact Person</th>
+										<th>Actions</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr ng-repeat="x in supplier">
+										<td><button data-toggle="modal" data-target="#orderSuppModal" ng-click="setSupplierProd(x.supplier_id, x.supplier_name)">Order</button></td>
+										<td>{{x.supplier_id}}
+										</td>
+										<td>{{x.supplier_name}}
+										</td>
+										<td>{{x.supplier_email}}
+										</td>
+										<td>{{x.supplier_number}}
+										</td>
+										<td>{{x.supplier_address}}
+										</td>
+										<td>{{x.supplier_contact}}
+										</td>
+										<td></td>
+										
+									</tr>
+								</tbody>
+							</table>		
+						</div>
+
+						<div id="aqcuisitionTab" class="tab-pane fade show">
+							<table class="table table-hover table-striped">
+								<thead>
+									<tr>
+										<th>Order Date</th>
+										<th>Order ID</th>
+										<th>Supplier Name</th>
+										<th>Ordered by</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr ng-repeat="y in pending">
+										<td>{{y.so_date}}</td>
+										<td>{{y.so_id}}</td>
+										<td>{{y.supplier_name}}</td>
+										<td>{{y.user_firstname}} {{y.user_lastname}}</td>
+										<td><a href="" data-toggle="modal" data-target="#receiveSuppModal" ng-click="getSuppItems(y.so_id, y.supplier_name)">Receive</a></td>
+									</tr>
+								</tbody>
+								
+							</table>
+						</div>
+
+						<div id="aqcuisitionHistoryTab" class="tab-pane fade show">
+							<table class="table table-hover table-striped">
+								<thead>
+									<tr>
+										<th>Order Date</th>
+										<th>Order ID</th>
+										<th>Supplier Name</th>
+										<th>Ordered by</th>
+										<th>Date Received</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+									
+									<tr ng-repeat="y in received">
+										<td>{{y.so_date}}</td>
+										<td>{{y.so_id}}</td>
+										<td>{{y.supplier_name}}</td>
+										<td>{{y.user_firstname}} {{y.user_lastname}}</td>
+										<td>
+										{{y.so_date_received}}</td>
+										<td>
+											<a href="#" data-toggle="modal" data-target="#acqDetailModal" ng-click="getSuppItemsRcvd(y.so_id, y.supplier_name)">Details</a>
+										</td>
+									</tr>
+								</tbody>
+								
+							</table>
+						</div>
+					</div>
+
+
+					
+				</div>
+			</div>
+		</div>
 	</div>
+	<!-- MODAL FOR summary -->
+	<div class="modal fade" id="acqDetailModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	  <div class="modal-dialog modal-lg" role="document" style="max-width: 600px;">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Supply Acquisition Summary</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<div>
+	      		<div class="form-group">
+	      			<label>Supplier: </label>
+	      			<span>{{suppName}}</span>
+	      		</div>
+	      		<hr>
+	      	</div>
+	      	<div style="height: 320px; overflow-y: auto; overflow-x: hidden;">
+	      		
+		        <table class="table">
+			    <thead class="thead-dark">
+			      <tr>
+			      	<th>Product ID</th>
+			        <th>Product</th>
+			        <th>Qty Received</th>
+			      </tr>
+			    </thead>
+			    <tbody>
+			    	<tr ng-repeat="y in summary">
+			    		<td>{{y.oi_product_id}}</td>
+			    		<td>{{y.product_name}}</td>
+			    		<td>{{y.oi_qty}}</td>
+			    	</tr>
+			    </tbody>
+			  </table>
+			</div>
+			<div></div>
+	      </div>
+	      <div class="modal-footer">
+	      	
+	      	</div>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- MODAL FOR ORDERING -->
+	<div class="modal fade addmodal" id="addDistModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Supplier Details</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+
+	         <form name="newSupplier" ng-submit="addSupp()">
+			  <div class="form-group">
+			    <label for="">Company Name:</label>
+			    <input type="text" class="form-control" name="" maxlength="20" minlength="4" ng-model="supp.name" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="">Contact Person:</label>
+			    <input type="text" class="form-control" name="" maxlength="60" minlength="4" ng-model="supp.person" required/>
+			  </div>
+			  <div class="form-group">
+			    <label for="user_conf">Company Address:</label>
+			    <input type="text" class="form-control" name="" maxlength="40" minlength="6" ng-model="supp.addr" required/>
+			  </div>
+
+			  <div class="form-group">
+			    <label for="">Company email:</label>
+			    <input type="email" class="form-control" name="" maxlength="60" minlength="4" ng-model="supp.email" required/><td>{{y.so_id}}</td>
+			  </div>
+			  <div class="form-group">
+			    <label for="">Company Contact Number:</label>
+			    <input type="text" class="form-control" name="" maxlength="60" minlength="4" ng-model="supp.number" required/>
+			  </div>
+			  
+			  <button type="submit" class="btn btn-default">SAVE</button>
+			</form>
+	      </div>
+	      <div class="modal-footer">
+	        
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Modal for Ordering to SUpplier-->
+	<div class="modal fade" id="orderSuppModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	  <div class="modal-dialog modal-lg" role="document" style="max-width: 600px;">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Order to {{setSuppName}}</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <form name="placeOrders" ng-submit="addOrder()">
+	      <div class="modal-body">
+	      	<div style="height: 350px; overflow-y: auto; overflow-x: hidden;">
+		        <table class="table">
+			    <thead class="thead-dark">
+			      <tr>
+			      	<th>Product ID</th>
+			        <th>Product Name</th>
+			        <th>Stock</th>
+			        <th>Quantity</th>
+			      </tr>
+			    </thead>
+			    <tbody>
+			      <tr ng-repeat="d in setProd">
+			      	<td>{{d.id}}</td>
+			      	<td>{{d.name}}</td>
+			      	<td>{{d.stock}}</td>
+			      	<td><input type="number" ng-model="d.orderQty" width="60%;" name="" min="0"></td>
+			      </tr>
+			    </tbody>
+			  </table>
+			</div>
+			<div></div>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="submit" class="btn btn-default" ng-click="submitSuppOrder()">Save</button>
+	    </div>
+	      </div>
+	  </form>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Modal for Receiving Order -->
+	<div class="modal fade" id="receiveSuppModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	  <div class="modal-dialog modal-lg" role="document" style="max-width: 600px;">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalLabel">Receive Order from {{receiveProd.supplier}}</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <form name="placeOrders" ng-submit="addOrder()">
+	      <div class="modal-body">
+	      	<div style="height: 350px; overflow-y: auto; overflow-x: hidden;">
+	      		<div class="form-group">
+	      			<label>Order ID:</label><span>{{receiveProd.oid}}</span>
+	      		</div>
+		        <table class="table">
+			    <thead class="thead-light">
+			      <tr>
+			      	<th>Product ID</th>
+			        <th>Product Name</th>
+			        <th>Stock</th>
+			        <th>Qty Delivered</th>
+			      </tr>
+			    </thead>
+			    <tbody>
+			      <tr ng-repeat="d in receiveProd.items">
+			      	<td>{{d.oi_product_id}}</td>
+			      	<td>{{d.product_name}}</td>
+			      	<td>{{d.product_qty}}</td>
+			      	<td><input type="number" ng-model="d.oi_qty" width="60%;" name="" min="0"></td>
+			      </tr>
+			    </tbody>
+			  </table>
+			</div>
+			<div></div>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="submit" class="btn btn-default" ng-click="receiveSuppOrder()">Receive Order</button>
+	    </div>
+	      </div>
+	  </form>
+	    </div>
+	  </div>
+	</div>
+
+
 	<script type="text/javascript">
 	$(document).ready(function() {
 		$('.addmodal').on('hidden.bs.modal', function(){
@@ -10,7 +313,147 @@
 	var app = angular.module("myApp", []);
 
 	app.controller("myCtrl", function($scope, $http){
+		$scope.supp = {};
+		$scope.activeSupp;
+		$scope.receiveProd = {};
+		// get all suppliers
+		$scope.getSupplier = function(){
+			$http.get('/api/suppliers').then(function(res){
+				$scope.supplier = res.data;
+			
+			});
+		}
+		$scope.getSupplier();
+		$scope.addSupp = function(){
+			console.log($scope.supp);
+			$http({
+				method: "POST",
+				url: "/api/post/add-supplier",
+				data: JSON.stringify({data: $scope.supp}),
+				dataType: 'json',
+				contentType: 'application/json'
+				}).then(function(response){
+					alert(response.data);
+					$scope.getSupplier();
+				});
+		}
 
+		$scope.setSupplierProd = function(id, name){
+			$scope.setProd = {};
+			$scope.setSuppName = name;
+			$scope.activeSupp = id;
+			// get all supplier products
+			$http.get(`/api/supplier-prod/${id}`).then(function(res){
+				$scope.setProd = res.data;
+			});
+		}
+
+		$scope.submitSuppOrder = function(){
+			if (!confirm("Save Order?"))
+				return;
+
+			// get all items with ordered qty
+			var toOrder = {
+				sid: $scope.activeSupp,
+				items: []
+			};
+			var q = $scope.setProd;
+			var total_qty = 0;
+			q.forEach(item =>{
+				if (item.orderQty > 0){
+					total_qty += item.orderQty;
+					toOrder.items.push({
+						pid: item.id,
+						qty: item.orderQty
+					});
+				}
+			});
+			if (toOrder.items.length > 0){
+				console.log(toOrder);
+				$http({
+				method: "POST",
+				url: "/api/post/add-supp-order",
+				data: JSON.stringify({data: toOrder}),
+				dataType: 'json',
+				contentType: 'application/json'
+				}).then(function(response){
+					alert(response.data);
+					$scope.setProd = {};
+					$scope.getSuppOrders();
+				});
+			}
+
+		}
+
+		// get storage status
+		$scope.getStorageStat = function(){
+			$http.get('/api/storage-status').then(function(res){
+				var storage = res.data;
+				storage.percent = Number((storage.qty / storage.size) * 100).toFixed(2);
+				
+
+				$('#currentsize').html(storage.qty);
+				$('#storagesize').html(storage.size);
+				$('#currentpercent').html(`(${storage.percent}%)`);
+
+			})
+		}
+		$scope.getStorageStat();
+
+		// get Orders from suppliers
+		$scope.getSuppOrders = function(){
+			$http.get('api/supply-order').then(function(res){
+				$scope.pending = res.data.pending;
+				$scope.received = res.data.received
+			});
+		}
+		$scope.getSuppOrders();
+
+		// get acquisition details
+		$scope.getSuppItems = function(id, name){
+			$scope.receiveProd = {
+				supplier: name,
+				oid: id
+			};
+			$http.get('/api/so-detail/'+id).then(function(res){
+				$scope.receiveProd.items = res.data;
+			});
+		}
+
+		// receive order to the database
+		$scope.receiveSuppOrder = function(){
+			if (!confirm('Save Changes?'))
+				return;
+			var rcvObj = {
+				oid: $scope.receiveProd.oid,
+				items: $scope.receiveProd.items
+			}
+			console.log(rcvObj);
+			$http({
+				method: "POST",
+				url: "/api/post/receive-supp-order",
+				data: JSON.stringify({data: rcvObj}),
+				dataType: 'json',
+				contentType: 'application/json'
+				}).then(function(response){
+
+					alert(response.data);
+					$('#receiveSuppModal').modal('hide');
+					$scope.getSuppOrders();
+					$scope.getStorageStat();
+				});
+		}
+
+		// show Acquisition Summary
+		$scope.getSuppItemsRcvd = function(id, name){
+			console.log(name);
+			$scope.suppName = name;
+			$scope.summary = {};
+			$http.get('/api/so-detail/'+id).then(function(res){
+				console.log(res.data);
+					$scope.summary = res.data;
+			});
+		}
 	});
 	</script>
 <% include partials/footer.ejs %>
