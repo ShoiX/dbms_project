@@ -97,7 +97,11 @@ app.get('/', function(req, res){
 });
 
 app.get('/dashboard', function(req, res){
-	res.render('dashboard', {activate: {dashboard: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+	if (req.session.user)
+		res.render('dashboard', {activate: {dashboard: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+	else
+    	res.redirect('/login');
+
 });
 app.get('/clients', function(req, res){
 	
@@ -293,7 +297,7 @@ app.get('/api/client-details/:id', function(req, res){
 
 // get all product-lines
 app.get('/api/product-lines', function(req, res){
-	con.query('SELECT *, tblsupplier.supplier_name, tblsupplier.supplier_id FROM `tblproductlines` INNER JOIN tblsupplier ON line_supplier_id = tblsupplier.supplier_id WHERE line_status = 1 ORDER BY `line_id` ASC', function(err, rows){
+	con.query('SELECT *, tblsupplier.supplier_name, tblsupplier.supplier_id FROM `tblproductlines` LEFT JOIN tblsupplier ON line_supplier_id = tblsupplier.supplier_id WHERE line_status = 1 ORDER BY `line_id` ASC', function(err, rows){
     	if (err)
     		throw err;
     	var json_data = [];
@@ -560,7 +564,9 @@ app.post("/api/post/add-prod-line", jsonParser, function(req, res){
 		}
 		else
 		{ 
-			con.query("INSERT INTO tblproductlines (line_name, line_supplier_id) VALUES ("+name+", "+req.body.supplier_id +")", function(err2, rows2){
+			var supp_id = (!req.body.supplier_id) ? null : req.body.supplier_id;
+			console.log(supp_id)
+			con.query("INSERT INTO tblproductlines (line_name, line_supplier_id) VALUES ("+name+", "+supp_id +")", function(err2, rows2){
 				if (err2){
 					throw err2;
 				}
@@ -1062,6 +1068,25 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  		}
 	})
 });
+
+ app.post('/api/post/summary', jsonParser, function(req, res){
+ 	var month = req.body.month;
+ 	var year = req.body.year;
+ 	var data = {};
+ 	
+ 	
+ 	// get sale for this month
+ 	con.query(`SELECT SUM(order_amount) AS sales
+		FROM tblorders 
+		WHERE order_status = ${constants.ORDER.APPROVE} 
+		AND order_update_date BETWEEN 
+		'${year}-${month}-01' AND '${year}-${month}-31'`, function(err, rows){
+		data.sales = rows[0].sales
+	});
+
+ 	// get drop data
+
+ });
  app.get('/logout', function(req, res){
  	req.session.destroy(function(err){
  		res.redirect('/');
