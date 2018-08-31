@@ -1,3 +1,12 @@
+
+@media only screen and (min-width: 800px){
+	body{
+		overflow-y:hidden;
+	}
+}
+.dashboard{
+	overflow-y: auto;
+}
 .line-list{
 	cursor: pointer;
 }

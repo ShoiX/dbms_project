@@ -250,7 +250,7 @@
 				    	</select>
 				    </div>
 			      <tr ng-repeat="d in checked">
-			      	<td>{{d[2]}}</td>
+			      	<td style="width: 50%; max-width: 50%;">{{d[2]}}</td>
 			      	<td><input type="number" min="1" max={{d[4]}} ng-min="1" ng-max="d[4]" ng-model="d[5]" style="width: 50%;"></td>
 			      	<td>&#8369;{{d[5] * d[3]}}</td>
 			      	<td><button type="button" ng-click="toggleProd(d[1])" style="color: red">X</button></td>
