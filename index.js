@@ -91,14 +91,14 @@ app.get('/login', function(req, res){
 app.get('/', function(req, res){
 		
 	if (req.session.user)
-    	res.render('home', {activate: {product: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+    	res.render('home', {title: 'product',activate: {product: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
     else
     	res.redirect('/login');
 });
 
 app.get('/dashboard', function(req, res){
 	if (req.session.user)
-		res.render('dashboard', {activate: {dashboard: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+		res.render('dashboard', {title: 'dashboard',activate: {dashboard: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
 	else
     	res.redirect('/login');
 
@@ -107,7 +107,7 @@ app.get('/clients', function(req, res){
 	
 	//if (req.session.user)
 	if (req.session.user)
-    	res.render('clients', {activate: {client: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+    	res.render('clients', {title: 'clients', activate: {client: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
     else
     	res.redirect('/login');
 });
@@ -138,7 +138,7 @@ app.get('/api/supplier-prod/:sid', function(req, res){
 app.get('/supply', function(req, res){
 	//if (req.session.user)
 	if (req.session.user)
-    	res.render('supply', {activate: {supply: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+    	res.render('supply', {title: 'supply', activate: {supply: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
     else
     	res.redirect('/login');
 });
@@ -147,7 +147,7 @@ app.get('/settings', function(req, res){
 	
 	//if (req.session.user)
 	if (req.session.user)
-    	res.render('settings', {activate: {settings: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+    	res.render('settings', {title: 'settings', activate: {settings: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
     else
     	res.redirect('/login');
 });
@@ -155,7 +155,7 @@ app.get('/settings', function(req, res){
 // orders page
 app.get('/orders', function(req, res){
 	if (req.session.user)
-    	res.render('orders', {activate: {orders: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
+    	res.render('orders', {title: 'orders', activate: {orders: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
     else
     	res.redirect('/login');
 })
@@ -1072,20 +1072,96 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  app.post('/api/post/summary', jsonParser, function(req, res){
  	var month = req.body.month;
  	var year = req.body.year;
- 	var data = {};
- 	
- 	
- 	// get sale for this month
- 	con.query(`SELECT SUM(order_amount) AS sales
-		FROM tblorders 
-		WHERE order_status = ${constants.ORDER.APPROVE} 
-		AND order_update_date BETWEEN 
-		'${year}-${month}-01' AND '${year}-${month}-31'`, function(err, rows){
-		data.sales = rows[0].sales
-	});
+ 	var data = {
+ 		sales_vals: [],
+ 		drop_vals: [],
+ 		pend_vals: []
+ 	};
+ 	for (var i = 0; i < month; i++) {
+ 		data.sales_vals.push(0);
+ 		data.drop_vals.push(0);
+ 		data.pend_vals.push(0);
+ 	}
+ 	var between_year = `'${year}-01-01' AND '${year}-12-31'`;
+ 	// setup promise chain
+ 	var query1 = new Promise(function(resolve){
+ 		// get sale for this month
+	 	con.query(`SELECT COALESCE(SUM(order_amount), 0) AS sales
+			FROM tblorders 
+			WHERE order_status = ${constants.ORDER.APPROVE} 
+			AND order_update_date BETWEEN '${year}-${month}-01' AND '${year}-${month}-31'
+			`, function(err, row1){
+				data.sales = row1[0].sales
+			resolve();
+		});
+ 	});
+ 	var query2 = query1.then(function(){
+ 		// get sale for this month
+	 	con.query(`SELECT COALESCE(SUM(order_amount), 0) AS dropped
+			FROM tblorders 
+			WHERE order_status = ${constants.ORDER.DROP} 
+			AND order_update_date BETWEEN 
+			'${year}-${month}-01' AND '${year}-${month}-31'`, function(err, row2){
+			data.drop =  row2[0].dropped;
+			return;
+		});	
+ 	});
 
- 	// get drop data
+ 	var query3 = query2.then(function(){
+ 		// get warehouse status
+		con.query(`SELECT COALESCE(SUM(product_qty), 0) AS numa from tblproducts WHERE product_status = 1;
+			SELECT comp_warehouse_size from tblsettings;`, function(err, row3){
+				if (err)
+					throw err;
+				data.stock = row3[0][0].numa;
+				data.size = row3[1][0].comp_warehouse_size;
+				return;
+			});
+ 	});
 
+ 	// get monthly sales
+ 	var query4 = query3.then(function(){					
+ 		con.query(`SELECT month(order_date) AS month, 
+ 			sum(order_amount) as sale_sum from tblorders 
+ 			WHERE order_status = ${constants.ORDER.APPROVE} AND order_date BETWEEN ${between_year}
+ 			GROUP BY MONTH(order_date)`, function(err, rows){
+
+ 				rows.forEach(row=>{
+ 					data.sales_vals[row.month-1] = row.sale_sum;
+ 				});
+ 				
+ 		});
+ 	});
+
+ 	// get monthly drop
+ 	var query5 = query4.then(function(){
+ 		con.query(`SELECT month(order_date) AS month, 
+ 			sum(order_amount) as drop_sum from tblorders 
+ 			WHERE order_status = ${constants.ORDER.DROP} AND order_date BETWEEN ${between_year}
+ 			GROUP BY MONTH(order_date)`, function(err, rows){
+
+ 				rows.forEach(row=>{
+ 					data.drop_vals[row.month-1] = row.drop_sum;
+ 				});
+ 		});
+ 	});
+
+ 	// get monthly pendings
+ 	var query5 = query4.then(function(){
+ 		con.query(`SELECT month(order_date) AS month, 
+ 			sum(order_amount) as pend_sum from tblorders 
+ 			WHERE order_status = ${constants.ORDER.PENDING} AND order_date BETWEEN ${between_year}
+ 			GROUP BY MONTH(order_date)`, function(err, rows){
+
+ 				rows.forEach(row=>{
+ 					data.pend_vals[row.month-1] = row.pend_sum;
+ 				});
+ 				console.log(data);
+ 				res.json(data);
+ 		});
+ 	});
+
+	//console.log(data);
  });
  app.get('/logout', function(req, res){
  	req.session.destroy(function(err){
