@@ -1089,7 +1089,7 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
 	 	con.query(`SELECT COALESCE(SUM(order_amount), 0) AS sales
 			FROM tblorders 
 			WHERE order_status = ${constants.ORDER.APPROVE} 
-			AND order_update_date BETWEEN '${year}-${month}-01' AND '${year}-${month}-31'
+			AND order_date BETWEEN '${year}-${month}-01 0:0:1' AND '${year}-${month}-31 23:59:59'
 			`, function(err, row1){
 				data.sales = row1[0].sales
 			resolve();
@@ -1097,11 +1097,13 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  	});
  	var query2 = query1.then(function(){
  		// get sale for this month
-	 	con.query(`SELECT COALESCE(SUM(order_amount), 0) AS dropped
+ 		var sql = `SELECT COALESCE(SUM(order_amount), 0) AS dropped
 			FROM tblorders 
 			WHERE order_status = ${constants.ORDER.DROP} 
-			AND order_update_date BETWEEN 
-			'${year}-${month}-01' AND '${year}-${month}-31'`, function(err, row2){
+			AND order_date BETWEEN 
+			'${year}-${month}-01 0:0:1' AND '${year}-${month}-31 23:59:59'`;
+			console.log(sql);
+	 	con.query(sql, function(err, row2){
 			data.drop =  row2[0].dropped;
 			return;
 		});	
