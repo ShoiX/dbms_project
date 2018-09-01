@@ -26,7 +26,7 @@
 				<div style="height: 470px; width: 100%; overflow-y: auto; overflow-x: hidden;">
 				<table id="prodTable"class="table table-hover table-striped" style="margin-left: 2%; margin-right: 2%;">
 					<thead> 
-					 	<tr>
+					 	<tr style="background-color: white;">
 					 		<th></th>
 							<th>ID</th>
 							<th>Product Name</th>
@@ -318,7 +318,12 @@
 
 <script type="text/javascript">
 	var table;
+	var dTable;
+	var $prodTable;
+	var main_tbl;
+	var reinit;
 	$(document).ready(function() {
+
 		document.getElementById("eprod_logo_input").value = "";
 		document.getElementById("prod_logo_input").value = "";
 
@@ -329,7 +334,13 @@
 		$('.editmodal').on('hidden.bs.modal', function(){
 	        document.getElementById("eprod_logo_input").value = "";
 	     });
-
+		$prodTable = $('#prodTable');
+		$prodTable.floatThead({
+				scrollContainer: true,
+	            position: 'fixed',
+	            zIndex: 0
+	        });
+		reinit = $prodTable.floatThead('destroy');
 
 		
 	});
@@ -350,7 +361,7 @@
 		$scope.editprod = {};
 		$scope.supplier = [];
 
-		var dTable;
+
 		// get product lines
 		$scope.getProductLines = function(){
 			$http.get("/api/product-lines").then(function(response){
@@ -389,16 +400,20 @@
 				params: {prod_id: chosen}
 			}).then(function(response){
 				$scope.product_data = response.data;
-				angular.element(document).ready(function() {  
+				angular.element(document).ready(function() { 
+
+					// set datatable
 				    dTable = $('#prodTable').DataTable({
 				    	paging: false,
 				    	columnDefs: [
-					    	{ "orderable": false, "targets": 0 }
+					    	{ "orderable": false, "targets": 0 },
+					    	{ "orderable": false, "targets": 6 }
 					  	],
 					  	bInfo: false
-				    });  
+				    });
+				    reinit(); 
 				});  
-				
+			
 				
 			});
 			$scope.active = {};
