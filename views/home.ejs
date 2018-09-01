@@ -38,7 +38,7 @@
 					</thead>
 					<tbody>
 						<tr ng-repeat="x in product_data">
-							<td><input type="checkbox" ng-model="checked[x.prod_id.toString()][0]" ng-click="toggleProd(x.prod_id, x.name, x.price, x.qty)"></td>
+							<td style="width: 5%; max-width: 5%;"><input type="checkbox" ng-model="checked[x.prod_id.toString()][0]" ng-click="toggleProd(x.prod_id, x.name, x.price, x.qty)"></td>
 							<td>{{x.prod_id}}</td>
 							<td style="width: 20%; max-width: 20%;"><a href="" data-toggle="modal" data-target="#prodSummaryModal" ng-click="getProdSummary(x.prod_id)">{{x.name}}</a></td>
 							<td style="width: 30%; max-width: 30%;">{{x.desc}}</td>
@@ -350,6 +350,7 @@
 		$scope.editprod = {};
 		$scope.supplier = [];
 
+		var dTable;
 		// get product lines
 		$scope.getProductLines = function(){
 			$http.get("/api/product-lines").then(function(response){
@@ -376,6 +377,9 @@
 		$scope.getClients();
 		$scope.getProducts = function(chosen, line_name){
 			
+			if (dTable){
+				dTable.destroy();
+			}			
 			$scope.selected_line = chosen;
 			$scope.selected_line_name = line_name;
 			$scope.product_data = {};
@@ -385,13 +389,22 @@
 				params: {prod_id: chosen}
 			}).then(function(response){
 				$scope.product_data = response.data;
+				angular.element(document).ready(function() {  
+				    dTable = $('#prodTable').DataTable({
+				    	paging: false,
+				    	columnDefs: [
+					    	{ "orderable": false, "targets": 0 }
+					  	],
+					  	bInfo: false
+				    });  
+				});  
 				
 				
 			});
 			$scope.active = {};
 			$scope.active[line_name] = 'active';
 			$scope.getStorageStat();
-			// datatable
+			
 
 		}
 
