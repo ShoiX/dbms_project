@@ -415,7 +415,7 @@ app.get("/api/orders/:type", function(req, res){
 			out.push({
 				id: d.order_id,
 				ref_id: utils.encode_Id(d.order_id, d.order_date),
-				date: moment(d.order_date).format('MMMM D YYYY'),
+				date: moment(d.order_date).format('MMMM D, YYYY'),
 				cl_name: `${d.client_firstname} ${d.client_lastname}`,
 				amt: d.order_amount,
 				agent: `${d.user_firstname} ${d.user_lastname}`
