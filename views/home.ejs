@@ -321,7 +321,8 @@
 	var dTable;
 	var $prodTable;
 	var main_tbl;
-	var reinit;
+	var destroyFloat;
+	var initFloat;
 	$(document).ready(function() {
 
 		document.getElementById("eprod_logo_input").value = "";
@@ -335,12 +336,14 @@
 	        document.getElementById("eprod_logo_input").value = "";
 	     });
 		$prodTable = $('#prodTable');
-		$prodTable.floatThead({
+		initFloat = $prodTable.floatThead({
 				scrollContainer: true,
 	            position: 'fixed',
 	            zIndex: 0
 	        });
-		reinit = $prodTable.floatThead('destroy');
+		destroyFloat = 
+			$prodTable.floatThead('destroy');
+		
 
 		
 	});
@@ -411,7 +414,7 @@
 					  	],
 					  	bInfo: false
 				    });
-				    reinit(); 
+				    destroyFloat();
 				});  
 			
 				

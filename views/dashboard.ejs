@@ -59,7 +59,11 @@
 
       <div class="row">
         <div class="col-sm-8 " style="margin: 1% auto; ">
-          <h4 class="text-center">Sales Performance</h4>
+          <h5 class="text-center">Sales Performance 
+            <select ng-options="year as year for year in YearSelect" ng-model="InitYear" ng-change="updateChart()">
+            </select>
+          </h5>
+          {{InitYear}}
           <canvas  id="line-chart" class="cstm-border" id="totalProducts" style="width:100%; height: 300px;"></canvas>
         </div>
       </div><br>
@@ -72,19 +76,18 @@
     var d = new Date();
     var month = d.getMonth() + 1;
     var year = d.getFullYear();
-	$(document).ready(function() {
-		$('.addmodal').on('hidden.bs.modal', function(){
-	        $(this).find('form')[0].reset();
-	     });
 
-	
-	});
 	var app = angular.module("myApp", []);
 
 	app.controller("myCtrl", function($scope, $http){
+    $scope.InitYear = year;
+    $scope.YearSelect = [$scope.InitYear];
+    for (var i = $scope.InitYear- 1; i > $scope.InitYear-10 ; i--) {
+      $scope.YearSelect.push(i)
+    }
+    console.log($scope.YearSelect)
+
     $scope.initDashboard = function(){
-      
-      
       $http({
         method: "POST",
         url: "/api/post/summary",
@@ -97,7 +100,7 @@
       })
       .then(function(response){
         var info = response.data;
-        info_chart = {
+        var info_chart = {
           sales: info.sales_vals,
           drop: info.drop_vals,
           pending: info.pend_vals
@@ -107,13 +110,36 @@
         $scope.stock = info.stock;
         $scope.size = info.size;
         $scope.pcnt = Number((info.stock / info.size) * 100).toFixed(2);
-        setChart(info_chart);
+        setChart(info_chart, year);
         console.log(response.data);
       });
     }
     $scope.initDashboard();
+
+    // update Dahsboard Chart
+    $scope.updateChart = function(){
+      $http({
+        method: "POST",
+        url: "/api/post/summary",
+        data: JSON.stringify({
+          month: month,
+          year: $scope.InitYear
+        }),
+        dataType: 'json',
+        contentType: 'application/json'
+      }).then(function(res){
+        var info = res.data;
+        var info_chart = {
+          sales: info.sales_vals,
+          drop: info.drop_vals,
+          pending: info.pend_vals
+        }
+        setChart(info_chart, $scope.InitYear);
+      })
+    }
+
 	});
-  function setChart(data){
+  function setChart(data, yearset){
     new Chart(document.getElementById("line-chart"), {
       type: 'line',
       data: {
@@ -139,7 +165,7 @@
       options: {
         title: {
           display: true,
-          text: `Sales Performance for the year ${year}`  
+          text: `Sales Performance for the year ${yearset}`  
         }
       }
     });
