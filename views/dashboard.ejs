@@ -63,7 +63,6 @@
             <select ng-options="year as year for year in YearSelect" ng-model="InitYear" ng-change="updateChart()">
             </select>
           </h5>
-          {{InitYear}}
           <canvas  id="line-chart" class="cstm-border" id="totalProducts" style="width:100%; height: 300px;"></canvas>
         </div>
       </div><br>
@@ -76,7 +75,7 @@
     var d = new Date();
     var month = d.getMonth() + 1;
     var year = d.getFullYear();
-
+    var chart;
 	var app = angular.module("myApp", []);
 
 	app.controller("myCtrl", function($scope, $http){
@@ -128,6 +127,9 @@
         dataType: 'json',
         contentType: 'application/json'
       }).then(function(res){
+        if (chart){
+          chart.destroy()
+        }
         var info = res.data;
         var info_chart = {
           sales: info.sales_vals,
@@ -140,7 +142,7 @@
 
 	});
   function setChart(data, yearset){
-    new Chart(document.getElementById("line-chart"), {
+    chart = new Chart(document.getElementById("line-chart"), {
       type: 'line',
       data: {
         labels: ['January','February','March','April','May','June' ,'July','August','September','October', 'November', 'December'],
@@ -169,6 +171,9 @@
         }
       }
     });
+
+	// set chart height
+	document.getElementById('line-chart').height = 482;
   }
 	</script>
 <% include partials/footer.ejs %>
