@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/ShoiX/dbms_project#readme",
   "dependencies": {
+    "activedirectory": "^0.7.2",
     "body-parser": "^1.18.3",
     "ejs": "^2.6.1",
     "express": "^4.16.3",

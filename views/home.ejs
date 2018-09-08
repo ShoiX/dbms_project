@@ -9,7 +9,7 @@
 				</div>
 				<div class="form-group" style="height: 470px; overflow-y: auto;">
 					<ul class="list-group">
-						<li ng-repeat="x in res" value="{{x.id}}" ng-click="getProducts(x.id, x.name);" class="line-list list-group-item {{active[x.name]}}">{{x.name}} &#160 <i class="fa fa-edit" ng-click="editLineName(x.id, x.name, x.supp_id, x.supp_name)" data-toggle="modal" data-target="#editLineModal"></i></li>	
+						<li ng-repeat="x in res" value="{{x.id}}" ng-click="getProducts(x.id, x.name);" class="line-list list-group-item {{active[x.name]}}">{{x.name}} &#160 <i class="fa fa-edit" ng-click="editLineName(x.id, x.name, x.supp_id, x.supp_name)" data-toggle="modal" data-target="#editLineModal" style="float: right"></i></li>	
 					</ul>
 				</div>
 			</div>
