@@ -415,7 +415,7 @@ app.get("/api/orders/:type", function(req, res){
 			out.push({
 				id: d.order_id,
 				ref_id: utils.encode_Id(d.order_id, d.order_date),
-				date: moment(d.order_date).format('MMMM D, YYYY'),
+				date: moment(d.order_date).format(constants.datetime_format3),
 				cl_name: `${d.client_firstname} ${d.client_lastname}`,
 				amt: d.order_amount,
 				agent: `${d.user_firstname} ${d.user_lastname}`
@@ -497,12 +497,12 @@ app.get('/api/supply-order', function(req, res){
 				throw err;
 			rows.forEach(row =>{
 				// format date 
-				row.so_date = moment(new Date(row.so_date)).format("MMMM D, YYYY");
+				row.so_date = moment(new Date(row.so_date)).format(constants.datetime_format3);
 				
 				// approved
 				if (row.so_status){
 					// format date received
-					row.so_date_received = moment(new Date(row.date_received)).format("MMMM D, YYYY");
+					row.so_date_received = moment(new Date(row.date_received)).format(constants.datetime_format3);
 					out.received.push(row);
 				}
 

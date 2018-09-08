@@ -15,7 +15,7 @@
 			<div class="col-md-12" style="height: 460px; overflow-y: auto; ">
 				<div class="tab-content">
 				    <div id="pendingTab" class="tab-pane fade show active">
-				      	<table class="table table-hover table-striped">
+				      	<table  class="table table-hover table-striped dt">
 							<thead>
 								<tr>
 									<th>Order Date</th>
@@ -52,7 +52,7 @@
 
 
 				    <div id="acceptedTab" class="tab-pane fade">
-				      <table class="table table-hover table-striped">
+				      <table class="table table-hover table-striped dt">
 							<thead>
 								<tr>
 									<th>Order Date</th>
@@ -79,7 +79,7 @@
 
 
 				    <div id="droppedTab" class="tab-pane fade">
-				    	<table class="table table-hover table-striped">
+				    	<table class="table table-hover table-striped dt">
 							<thead>
 								<tr>
 									<th>Order Date</th>
@@ -153,6 +153,7 @@
 	</div>
 
 	<script type="text/javascript">
+		var dTable;
 		$(document).ready(function() {
 			$('.addmodal').on('hidden.bs.modal', function(){
 		        $(this).find('form')[0].reset();
@@ -168,15 +169,19 @@
 				$http.get("/api/orders/pending").then(function(response){
 					$scope.orders.p = response.data;
 					
+					$http.get("/api/orders/approved").then(function(response){
+						$scope.orders.a = response.data;
+						
+						$http.get("/api/orders/dropped").then(function(response){
+							$scope.orders.d = response.data;
+							angular.element(document).ready(function() {
+								setDataTable();
+							});
+						});
+					});
 				});
-				$http.get("/api/orders/approved").then(function(response){
-					$scope.orders.a = response.data;
-					
-				});
-				$http.get("/api/orders/dropped").then(function(response){
-					$scope.orders.d = response.data;
-					
-				});
+				
+				
 			}
 
 			$scope.getOrderDetails();
@@ -219,5 +224,16 @@
 				
 			}
 		});
+		// set dataTables
+		function setDataTable(){
+			if (dTable){
+				dTable.destroy();
+			}
+
+			dTable = $('.dt').DataTable({
+				paging: false,
+				bInfo: false
+			});
+		}
 	</script>
 <% include partials/footer.ejs %>
