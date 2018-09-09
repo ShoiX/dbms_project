@@ -156,8 +156,10 @@ app.get('/settings', function(req, res){
 app.get('/orders', function(req, res){
 	if (req.session.user)
     	res.render('orders', {title: 'orders', activate: {orders: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
-    else
+    else{
     	res.redirect('/login');
+    	//res.render('orders', {title: 'orders', activate: {orders: 'active'},  name: `Jerryco Alaba`});
+    }
 })
 
 // list of clients with id
@@ -179,12 +181,13 @@ app.get('/api/client-select', function(req, res){
 
 // get storage status
 app.get('/api/storage-status', (req, res)=>{
-	con.query(`SELECT COALESCE(SUM(product_qty), 0) AS numa from tblproducts WHERE product_status = 1;
+	con.query(`SELECT COALESCE(SUM(product_qty), 0) AS numa, COALESCE(COUNT(product_id), 0) AS unique_prod from tblproducts WHERE product_status = 1;
 		SELECT comp_warehouse_size from tblsettings;`, function(err, row){
 			
 		if (err)
 			throw err;
 		res.json({size: row[1][0].comp_warehouse_size,
+			unique: row[0][0].unique_prod,
 			qty: row[0][0].numa});
 	})
 })
@@ -297,7 +300,7 @@ app.get('/api/client-details/:id', function(req, res){
 
 // get all product-lines
 app.get('/api/product-lines', function(req, res){
-	con.query('SELECT *, tblsupplier.supplier_name, tblsupplier.supplier_id FROM `tblproductlines` LEFT JOIN tblsupplier ON line_supplier_id = tblsupplier.supplier_id WHERE line_status = 1 ORDER BY `line_id` ASC', function(err, rows){
+	con.query('SELECT *, tblsupplier.supplier_name, tblsupplier.supplier_id FROM `tblproductlines` LEFT JOIN tblsupplier ON line_supplier_id = tblsupplier.supplier_id WHERE line_status = 1 ORDER BY `line_name` ASC', function(err, rows){
     	if (err)
     		throw err;
     	var json_data = [];
@@ -349,7 +352,9 @@ app.get('/api/po/:id', function(req, res){
 
 	var cid = req.params.id;
 	// get company details first 
-	con.query(`SELECT tblusers.user_firstname,
+	con.query(`SELECT
+		order_date,
+		 tblusers.user_firstname,
 		 tblusers.user_lastname,
 		 tblclients.client_firstname,
 		 tblclients.client_lastname,
@@ -368,6 +373,7 @@ app.get('/api/po/:id', function(req, res){
 		 		throw err;
 		 	rows[0].ref_no = utils.encode_Id(cid,rows[0].order_date);
 		 	rows[0].dgenerated = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format2);
+		 	rows[0].date_ordered = moment(rows[0].order_date).format(constants.datetime_format2);
 		 	
 
 		 	//get each ordered item
@@ -388,7 +394,12 @@ app.get('/api/po/:id', function(req, res){
 //  list of orders
 app.get("/api/orders/:type", function(req, res){
 	
-
+	var DateFilter = "";
+	if (req.query.from && req.query.to){
+		DateFilter = `AND order_date BETWEEN '${req.query.from} 00:00:00'
+		AND '${req.query.to} 23:59:59'`;
+	}
+	//console.log(DateFilter);
 	var type = req.params.type;
 	var stat = {
 		pending: [constants.ORDER.PENDING, 'order_id'],
@@ -398,16 +409,19 @@ app.get("/api/orders/:type", function(req, res){
 	
 	if(!stat[type])
 		res.end("Error");
-	con.query(`SELECT tblorders.*,
+	var query = `SELECT tblorders.*,
 	tblclients.client_firstname,
 	tblclients.client_lastname,
 	tblusers.user_firstname,
 	tblusers.user_lastname
 	FROM tblorders
-	INNER JOIN tblclients ON order_client_id = tblclients.client_id
-	INNER JOIN tblusers ON tblorders.order_user_id = tblusers.user_id
+	LEFT JOIN tblclients ON order_client_id = tblclients.client_id
+	LEFT JOIN tblusers ON tblorders.order_user_id = tblusers.user_id
 	WHERE order_status = ${stat[type][0]}
-	ORDER BY ${stat[type][1]} DESC`, function(err, rows){
+	${DateFilter}
+	ORDER BY ${stat[type][1]} DESC`;
+	
+	con.query(query, function(err, rows){
 		if (err)
 			throw err;
 		var out = [];

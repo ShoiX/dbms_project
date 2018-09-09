@@ -2,7 +2,7 @@ module.exports = {
 	my_timezone : 'Asia/Manila',
 	datetime_format : 'YYYY-MM-D h:mm:ss',
 	datetime_format2 : 'YYYY-MM-D h:mm a',
-	datetime_format3 : 'YYYY/MM/D',
+	datetime_format3 : 'YYYY-MM-DD',
 
 	SESSION_SECRET: "MMDAPO0919",
 

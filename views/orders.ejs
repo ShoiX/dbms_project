@@ -4,11 +4,28 @@
 				<h4 style="font-size: 160%; margin: 0 auto;">Order Monitoring</h4>	
 		</div>
 		<div class="row">
-			<ul class="nav nav-tabs" style="margin-left: 2%;">
-				<li class="nav-item"><a data-toggle="tab" href="#pendingTab" class="nav-link active">Pending</a></li>
-				<li class="nav-item"><a data-toggle="tab" href="#acceptedTab" class="nav-link">Approved</a></li>
-				<li class="nav-item"><a data-toggle="tab" href="#droppedTab" class="nav-link">Dropped</a></li>
-			</ul>	
+			<div class="col-md-4">
+				<ul class="nav nav-tabs" style="border: none;">
+					<li class="nav-item"><a data-toggle="tab" href="#pendingTab" class="nav-link active">Pending</a></li>
+					<li class="nav-item"><a data-toggle="tab" href="#acceptedTab" class="nav-link">Approved</a></li>
+					<li class="nav-item"><a data-toggle="tab" href="#droppedTab" class="nav-link">Dropped</a></li>
+				</ul>
+			</div>
+			<div class="col-md-8">
+				<div class="form-group" style="float: right; margin-top: 3px;">
+					<button class="btn-default" style=" margin-right: 15px;" ng-click="refreshFilter()">
+						Refresh
+					</button>
+					<div style="display: inline-block; margin-right: 20px;">
+						<input ng-model="FilterFrom" ng-change="filterDate()"  type="text" class="datepicker" placeholder="Custom Period: From">
+				    	<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+					</div>
+					<div style=" display: inline-block; margin-right: 20px;">
+						<input ng-model="FilterTo" ng-change="filterDate()" id="filterTO" type="text" class="datepicker" placeholder="Custom Period: To">
+				    	<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+					</div>
+				</div>
+			</div>	
 		</div>
 		
 		<div class="row border">
@@ -38,8 +55,8 @@
 										    Action
 										  </button>
 										  <div class="dropdown-menu">
-										    <a class="dropdown-item" href="#" ng-click="updateOrder(x.id, 'approve')">Approve</a>
-										    <a class="dropdown-item" href="#" ng-click="updateOrder(x.id, 'drop')">Drop</a>
+										    <a class="dropdown-item" ng-click="updateOrder(x.id, 'approve')">Approve</a>
+										    <a class="dropdown-item" ng-click="updateOrder(x.id, 'drop')">Drop</a>
 										  </div>
 										</div>
 									</td>
@@ -104,7 +121,6 @@
 				    </div>
 				  </div>
 			</div>
-		  
 		</div>
 	</div>
 	<div class="modal fade" id="orderDetailsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -158,6 +174,14 @@
 			$('.addmodal').on('hidden.bs.modal', function(){
 		        $(this).find('form')[0].reset();
 		     });
+
+			// init datepicker
+			$('.datepicker').datepicker({
+				format: 'yyyy-mm-dd',
+				endDate: '+0d',
+		        autoclose: true
+			});
+
 		});
 		var app = angular.module("myApp", []);
 
@@ -165,17 +189,25 @@
 			$scope.details = {};
 			$scope.orders = {};
 			// get 3 types of order in the db
-			$scope.getOrderDetails = function(){
-				$http.get("/api/orders/pending").then(function(response){
+			$scope.getOrderDetails = function(from = '', to =''){
+				if (dTable)
+					dTable.destroy();
+				$http.get(`/api/orders/pending?from=${from}&to=${to}`).then(function(response){
 					$scope.orders.p = response.data;
 					
-					$http.get("/api/orders/approved").then(function(response){
+					$http.get(`/api/orders/approved?from=${from}&to=${to}`).then(function(response){
 						$scope.orders.a = response.data;
-						
-						$http.get("/api/orders/dropped").then(function(response){
+						console.log($scope.orders.a );
+						$http.get(`/api/orders/dropped?from=${from}&to=${to}`).then(function(response){
 							$scope.orders.d = response.data;
-							angular.element(document).ready(function() {
-								setDataTable();
+							angular.element(function() {
+								//setDataTable();
+								dTable = $('.dt').DataTable({
+									paging: false,
+									bInfo: false, 
+									searching: false,
+									order: []
+								});
 							});
 						});
 					});
@@ -223,17 +255,21 @@
 				});
 				
 			}
-		});
-		// set dataTables
-		function setDataTable(){
-			if (dTable){
-				dTable.destroy();
-			}
 
-			dTable = $('.dt').DataTable({
-				paging: false,
-				bInfo: false
-			});
-		}
+			$scope.filterDate = function(){
+				if ($scope.FilterFrom && $scope.FilterTo){
+					var dfrom = new Date($scope.FilterFrom);
+					var dto = new Date($scope.FilterTo);
+					if (dto >= dfrom)
+						$scope.getOrderDetails($scope.FilterFrom, $scope.FilterTo);
+				}
+			},
+			$scope.refreshFilter = function(){
+				$scope.FilterFrom = '';
+				$scope.FilterTo = '';
+				$scope.getOrderDetails();
+			}
+		});
+		
 	</script>
 <% include partials/footer.ejs %>

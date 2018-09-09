@@ -21,6 +21,9 @@
 						/
 						<span id="storagesize">1000</span> 
 						<span id="currentpercent"></span>
+						<span>&#160</span>
+						<span id="uniqueprod"></span>
+						<span> Unique Products</span>
 					</span>
 				</div>
 				<div style="height: 470px; width: 100%; overflow-y: auto; overflow-x: hidden;">
@@ -416,7 +419,8 @@
 					    	{ "orderable": false, "targets": 0 },
 					    	{ "orderable": false, "targets": 6 }
 					  	],
-					  	bInfo: false
+					  	bInfo: false,
+					  	order: []
 				    });
 				    initFloat();
 				});  
@@ -483,6 +487,7 @@
 				$('#currentsize').html(storage.qty);
 				$('#storagesize').html(storage.size);
 				$('#currentpercent').html(`(${storage.percent}%)`);
+				$('#uniqueprod').html(storage.unique);
 
 			})
 		}
