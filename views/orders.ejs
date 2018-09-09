@@ -190,6 +190,7 @@
 			$scope.orders = {};
 			// get 3 types of order in the db
 			$scope.getOrderDetails = function(from = '', to =''){
+				$scope.orders = {};
 				if (dTable)
 					dTable.destroy();
 				$http.get(`/api/orders/pending?from=${from}&to=${to}`).then(function(response){
