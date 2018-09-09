@@ -209,7 +209,7 @@
 				dTable.destroy();
 			$http.get("api/clients").then(function(response){
 				$scope.res = response.data;
-				angular.element(document).ready(function() {
+				angular.element(function() {
 					dTable = $('.dt').DataTable({
 						paging: false,
 						bInfo: false,

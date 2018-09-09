@@ -410,7 +410,7 @@
 				params: {prod_id: chosen}
 			}).then(function(response){
 				$scope.product_data = response.data;
-				angular.element(document).ready(function() { 
+				angular.element(function() { 
 
 					// set datatable
 				    dTable = $('#prodTable').DataTable({
