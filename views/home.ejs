@@ -8,7 +8,10 @@
 					<span><button class="btn"  data-toggle="modal" data-target="#addProdModal">+</button></span>
 				</div>
 				<div class="form-group" style="height: 470px; overflow-y: auto;">
-					<ul class="list-group">
+					<div id="spinner" style="display: none;">
+						<button class="btn btn-sm btn-warning"><span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading...</button>
+					</div>
+					<ul class="list-group" id="LineNav">
 						<li ng-repeat="x in res" value="{{x.id}}" ng-click="getProducts(x.id, x.name);" class="line-list list-group-item {{active[x.name]}}">{{x.name}} &#160 <i class="fa fa-edit" ng-click="editLineName(x.id, x.name, x.supp_id, x.supp_name)" data-toggle="modal" data-target="#editLineModal" style="float: right"></i></li>	
 					</ul>
 				</div>
@@ -396,7 +399,8 @@
 		$scope.getProductLines();
 		$scope.getClients();
 		$scope.getProducts = function(chosen, line_name){
-			
+			$('#spinner').toggle();
+			$('#LineNav').toggle();
 			if (dTable){
 				dTable.destroy();
 			}
@@ -423,6 +427,11 @@
 					  	order: []
 				    });
 				    initFloat();
+				    setTimeout(function(){
+				    	$('#spinner').toggle();
+						$('#LineNav').toggle();
+				    }, 100);
+				    
 				});  
 			
 				
