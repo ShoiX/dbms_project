@@ -306,7 +306,7 @@
 
 	<script type="text/javascript">
 	var dTable;
-	var setDT = ()=>{
+	/*var setDT = ()=>{
 		angular.element(function() {
 			dTable = $('.dt').DataTable({
 				paging: false,
@@ -314,7 +314,7 @@
 				order: []
 			});
 		});
-	}
+	}*/
 	$(document).ready(function() {
 		$('.addmodal').on('hidden.bs.modal', function(){
 	        $(this).find('form')[0].reset();
@@ -333,7 +333,7 @@
 			$http.get('/api/suppliers').then(function(res){
 				console.log(res.data);
 				$scope.supplier = res.data;
-				$scope.getSuppOrders(setDT());
+				$scope.getSuppOrders();
 			});
 		}
 		$scope.getSupplier();
@@ -392,7 +392,7 @@
 				}).then(function(response){
 					alert(response.data);
 					$scope.setProd = {};
-					$scope.getSuppOrders(setDT());
+					$scope.getSuppOrders();
 				});
 			}
 
@@ -414,15 +414,20 @@
 		$scope.getStorageStat();
 
 		// get Orders from suppliers
-		$scope.getSuppOrders = function(cb){
+		$scope.getSuppOrders = function(){
 			if (dTable){
 				dTable.destroy();
 			}
 			$http.get('api/supply-order').then(function(res){
 				$scope.pending = res.data.pending;
 				$scope.received = res.data.received
-				if (cb)
-					cb()
+				angular.element(function() {
+					dTable = $('.dt').DataTable({
+						paging: false,
+						bInfo: false,
+						order: []
+					});
+				});
 			});
 		}
 
@@ -456,7 +461,7 @@
 
 					alert(response.data);
 					$('#receiveSuppModal').modal('hide');
-					$scope.getSuppOrders(setDT());
+					$scope.getSuppOrders();
 					$scope.getStorageStat();
 				});
 		}
