@@ -6,7 +6,23 @@
 				<button class="btn btn-primary" data-toggle="modal" data-target="#addUserModal">Add New User</button>		
 			</span>
 		</div>
+		
 		<div class="row">
+
+			<form action="/generate-report" method="POST" style="margin: 1.5%;">
+				<label style="margin: 2%;"><b>Yearly Report</b></label>
+				<br>
+				<select name="year">
+					<script type="text/javascript">
+						var d = new Date();
+						for (var i = d.getFullYear(), j = i - 10; i > j; i-- ){
+							document.write(`<option value='${i}'>${i}</option>`);
+						}
+					</script>
+				</select>
+				<br>
+				<input type="submit" class="btn btn-default" name="" value="Generate Report">
+			</form>
 			<form name="UpdateComp" ng-submit="updateComp()" style="margin: 0 auto;">
 				<h2>Company Profile</h2>
 			  <div class="form-group">
@@ -33,6 +49,14 @@
 			  
 			  <button type="submit" class="btn btn-default">SAVE</button>
 			</form>
+		</div>
+		<div class="row">
+			<div class="col-md-12">
+				<span style="margin-top: -2%; margin-left: 4%;">
+					<a href="http://localhost/export/tblusers.php">Export Users</a>
+				</span>
+			</div>
+			
 		</div>
 	</div>
 	<!-- Modal for Adding User-->

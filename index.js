@@ -14,6 +14,9 @@ var mime = require('mime');
 var ejs =  require('ejs');
 var pdf = require('html-pdf');
 
+
+const xlsx = require('xlsx-populate');
+const populate_spreadsheet = require('./include/populate');
  /*MAILER OBJECT*/
  var mailer = require('./include/mail.js');
 
@@ -148,8 +151,10 @@ app.get('/settings', function(req, res){
 	//if (req.session.user)
 	if (req.session.user)
     	res.render('settings', {title: 'settings', activate: {settings: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
-    else
-    	res.redirect('/login');
+    else{
+    	//res.redirect('/login');
+    	res.render('settings', {title: 'settings', activate: {settings: 'active'},  name: `Jerryco Alaba`});
+    }
 });
 
 // orders page
@@ -1179,6 +1184,39 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
 
 	//console.log(data);
  });
+
+ // generate excel report
+ app.post('/generate-report', urlParser, function(req, res){
+ 	
+ 	const year = req.body.year;
+
+ 	/*const file = ('./report_store/DBMSReportTemplate.xlsx');
+ 	const filename = 'Report.xlsx';
+ 	res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+ 	res.setHeader('Content-Disposition', 'attachment;filename="'+filename+'"');
+ 	res.setHeader('Cache-Control', 'max-age=0');
+ 	res.setHeader('Cache-Control', 'max-age=1');
+ 	res.download(file);*/
+
+ 	xlsx.fromFileAsync("./report_store/template.xlsx")
+    .then(workbook => {
+
+        // Get the output
+        const gen = populate_spreadsheet(workbook, year, con);
+        gen.then(function(out){
+        	//console.log(out);
+        	return out.outputAsync();	
+        })
+        .then(data =>{
+	    	console.log
+	    	res.attachment("YearlyReport.xlsx");
+	            
+	        // Send the workbook.
+	        res.send(data);
+	    });
+    })
+ });
+
  app.get('/logout', function(req, res){
  	req.session.destroy(function(err){
  		res.redirect('/');
@@ -1186,3 +1224,4 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  });
 
 app.listen(3000);
+
