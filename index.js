@@ -152,8 +152,8 @@ app.get('/settings', function(req, res){
 	if (req.session.user)
     	res.render('settings', {title: 'settings', activate: {settings: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
     else{
-    	//res.redirect('/login');
-    	res.render('settings', {title: 'settings', activate: {settings: 'active'},  name: `Jerryco Alaba`});
+    	res.redirect('/login');
+    	//res.render('settings', {title: 'settings', activate: {settings: 'active'},  name: `Jerryco Alaba`});
     }
 });
 
@@ -662,11 +662,11 @@ app.post("/api/post/add-prod", jsonParser, upload.single('prod_logo'), function(
 				${con.escape(pdata.desc)},
 				${pdata.price},
 				${pdata.qty})`;
-				
+				console.log(q);
 			con.query(q, function(err2, rows2){
 					if (err2)
 						throw err2;
-					// there is a prod_logo
+					// there is a prod_logo:8
 					if (req.file){
 						var in_id = rows2.insertId;
 						var img_name = req.file.filename;
@@ -1202,14 +1202,14 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
     .then(workbook => {
 
         // Get the output
-        const gen = populate_spreadsheet(workbook, year, con);
+        const gen = populate_spreadsheet(workbook, year, con, `${req.session.user.fname} ${req.session.user.lname}`);
         gen.then(function(out){
         	//console.log(out);
         	return out.outputAsync();	
         })
         .then(data =>{
 	    	console.log
-	    	res.attachment("YearlyReport.xlsx");
+	    	res.attachment(`${year}YearlyReport.xlsx`);
 	            
 	        // Send the workbook.
 	        res.send(data);

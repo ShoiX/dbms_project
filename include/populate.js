@@ -2,10 +2,10 @@ var constants = require('./constants');
 var moment_tzone = require('moment-timezone');
 var moment = require('moment');
 var utils = require('./utils');
-module.exports = function(workbook, year, con){
+module.exports = function(workbook, year, con, user = 'Jerryco  Alaba'){
 		
 	return new Promise(function(resolve){
-		const user = 'Jerryco  1234';
+		
 		const date = moment_tzone().tz(constants.my_timezone).format(constants.datetime_format2);
 		const qfrom = `'${year}-01-01 0:0:1'`;
 		const qto = `'${year}-12-31 23:59:59'`;
@@ -38,7 +38,7 @@ module.exports = function(workbook, year, con){
 
 				// TITLE
 				sheet1.cell('F6').value(`${year} SALES REPORT`);
-				sheet2.cell('D6').value(`${year} INVENTORY REPORT`);
+				sheet2.cell('D6').value(`INVENTORY REPORT`);
 				sheet3.cell('D6').value(`${year} SALES REPORT SUMMARY`);
 				Inresolve();
 
@@ -73,11 +73,55 @@ module.exports = function(workbook, year, con){
 						
 				}
 				sheet1.cell('I3').value(sales);
-				resolve(workbook);
+				return;
 				
 			});
 			
-		})
+		});
+		const query3 = query2.then(function(){
+			const sql1 = `SELECT *, tblproductlines.line_name, 
+			COALESCE(SUM(tblorder_items.item_subtotal),0) AS amtt 
+			FROM tblproducts 
+			LEFT JOIN tblproductlines ON product_line_id = tblproductlines.line_id 
+			LEFT JOIN tblorder_items ON product_id = tblorder_items.item_product_id 
+			LEFT JOIN tblorders ON tblorder_items.item_order_id = tblorders.order_id AND tblorders.order_status = ${constants.ORDER.APPROVE}  AND tblorders.${DateFilter}
+			GROUP BY product_id 
+			ORDER BY tblproductlines.line_name`;
+			console.log(sql1)
+			con.query(sql1, (err,rows2)=>{
+				console.log(rows2);
+				const start = 9;
+				for (var i = 0; i < rows2.length; i++){
+					let curr = i+start;
+					//sheet2.cell(`A${curr}`).value(rows[i].line_name);
+					sheet2.cell(`B${curr}`).value(rows2[i].product_id);
+					sheet2.cell(`C${curr}`).value(rows2[i].product_name);
+					sheet2.cell(`D${curr}`).value(rows2[i].product_description);
+					sheet2.cell(`E${curr}`).value(rows2[i].product_price);
+					sheet2.cell(`F${curr}`).value(rows2[i].product_qty);
+					sheet2.cell(`G${curr}`).value(rows2[i].amtt);
+				}
+					
+			});
+			
+		});
+		const query4 = query3.then(function(){
+			const sql3 = `SELECT MONTH(order_date) AS mon, SUM(order_amount) AS sum_order 
+			FROM tblorders 
+			WHERE order_status = ${constants.ORDER.APPROVE} AND ${DateFilter}
+			GROUP BY MONTH(order_date)`;
+			console.log(sql3);
+			con.query(sql3, (err3, rows3)=>{
+				console.log(rows3);
+				const start = 10;
+				for (var i = 0; i < rows3.length; i++){
+					let row = rows3[i];
+					sheet3.cell(`C${start+row.mon}`).value(row.sum_order);
+				}
+				resolve(workbook);
+			});
+			
+		});
 		
 	});
 	
