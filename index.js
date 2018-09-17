@@ -102,8 +102,10 @@ app.get('/', function(req, res){
 app.get('/dashboard', function(req, res){
 	if (req.session.user)
 		res.render('dashboard', {title: 'dashboard',activate: {dashboard: 'active'},  name: `${req.session.user.fname} ${req.session.user.lname}`});
-	else
-    	res.redirect('/login');
+	else{
+    	//res.redirect('/login');
+    	res.render('dashboard', {title: 'dashboard',activate: {dashboard: 'active'},  name: `Jerryco Alaba`});
+	}
 
 });
 app.get('/clients', function(req, res){
@@ -1121,7 +1123,7 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
 			WHERE order_status = ${constants.ORDER.DROP} 
 			AND order_date BETWEEN 
 			'${year}-${month}-01 0:0:1' AND '${year}-${month}-31 23:59:59'`;
-			console.log(sql);
+			//console.log(sql);
 	 	con.query(sql, function(err, row2){
 			data.drop =  row2[0].dropped;
 			return;
@@ -1177,11 +1179,25 @@ app.post('/api/post/edit-client', jsonParser, function(req, res){
  				rows.forEach(row=>{
  					data.pend_vals[row.month-1] = row.pend_sum;
  				});
- 				console.log(data);
- 				res.json(data);
+ 				//console.log(data);
+ 				
  		});
  	});
+ 	query5.then(function(){
+ 		let sqll = `SELECT COALESCE(SUM(tblsupply_order_items.oi_qty), 0) AS num
+ 			FROM tblsupply_order 
+ 			INNER JOIN tblsupply_order_items
+ 			ON so_id = tblsupply_order_items.oi_so_id
+ 			WHERE oi_status = 1 AND  so_date_received BETWEEN 
+			'${year}-${month}-01 0:0:1' AND '${year}-${month}-31 23:59:59'`;
+			console.log(sqll);
+ 		con.query(sqll, function(err, rows){
+ 				data.acqr_items = rows[0].num;
+ 				console.log(data);
+				res.json(data);
 
+ 		});
+ 	});
 	//console.log(data);
  });
 
